@@ -13,7 +13,6 @@ public abstract class BaseRepository<TEntity, TKey extends Serializable> impleme
     protected final Class<TEntity> clazz;
 
     protected BaseRepository(EntityManager entityManager, Class<TEntity> clazz) {
-       // super(clazz, entityManager);
         this.entityManager = entityManager;
         this.clazz = clazz;
     }

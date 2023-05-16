@@ -1,4 +1,4 @@
-package com.cda.model;
+package com.cda.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -13,16 +13,16 @@ import lombok.Setter;
 public class Tenant {
 
     @Id
-    @Column(name = "tenant_id")
+    @Column()
     private String id;
 
-    @Column()
+    @Column(nullable = false)
     private String db;
 
-    @Column()
+    @Column(nullable = false)
     private String password;
 
-    @Column()
+    @Column(nullable = false)
     private String url;
 
 }

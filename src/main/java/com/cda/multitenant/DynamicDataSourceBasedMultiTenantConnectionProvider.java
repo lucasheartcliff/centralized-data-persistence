@@ -11,14 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
-import org.springframework.cglib.core.internal.LoadingCache;
 import org.springframework.stereotype.Component;
 
 import com.cda.model.Tenant;
 import com.cda.repository.tenant.TenantRepository;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
+import com.zaxxer.hikari.HikariDataSource;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -69,7 +70,7 @@ public class DynamicDataSourceBasedMultiTenantConnectionProvider
                 })
                 .build(new CacheLoader<String, DataSource>() {
                     public DataSource load(String key) {
-                        Tenant tenant = masterTenantRepository.findByTenantId(key)
+                        Tenant tenant = masterTenantRepository.findById(key)
                                 .orElseThrow(() -> new RuntimeException("No such tenant: " + key));
                         return createAndConfigureDataSource(tenant);
                     }
@@ -99,7 +100,7 @@ public class DynamicDataSourceBasedMultiTenantConnectionProvider
         ds.setPassword(decryptedPassword);
         ds.setJdbcUrl(tenant.getUrl());
 
-        ds.setPoolName(tenant.getTenantId() + TENANT_POOL_NAME_SUFFIX);
+        ds.setPoolName(tenant.getId() + TENANT_POOL_NAME_SUFFIX);
 
         log.info("Configured datasource: {}", ds.getPoolName());
         return ds;

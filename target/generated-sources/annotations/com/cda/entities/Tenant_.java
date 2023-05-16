@@ -1,4 +1,4 @@
-package com.cda.model;
+package com.cda.entities;
 
 import javax.annotation.Generated;
 import javax.persistence.metamodel.SingularAttribute;
