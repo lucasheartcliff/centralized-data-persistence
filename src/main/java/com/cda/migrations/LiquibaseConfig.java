@@ -14,17 +14,17 @@ import org.springframework.context.annotation.Configuration;
 import liquibase.integration.spring.SpringLiquibase;
 
 @Configuration
-@ConditionalOnProperty(name = "multitenancy.master.liquibase.enabled", havingValue = "true", matchIfMissing = true)
+// @ConditionalOnProperty(name = "multitenancy.master.liquibase.enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(LiquibaseProperties.class)
 public class LiquibaseConfig {
 
-    @Bean
-    @ConfigurationProperties("multitenancy.master.liquibase")
+    // @Bean
+    // @ConfigurationProperties("multitenancy.master.liquibase")
     public LiquibaseProperties masterLiquibaseProperties() {
         return new LiquibaseProperties();
     }
 
-    @Bean
+    // @Bean
     public SpringLiquibase masterLiquibase(@LiquibaseDataSource ObjectProvider<DataSource> liquibaseDataSource) {
         LiquibaseProperties liquibaseProperties = masterLiquibaseProperties();
         SpringLiquibase liquibase = new SpringLiquibase();

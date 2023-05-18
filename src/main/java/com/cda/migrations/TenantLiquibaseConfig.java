@@ -9,18 +9,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
 @Configuration
-@ConditionalOnProperty(name = "multitenancy.tenant.liquibase.enabled", havingValue = "true", matchIfMissing = true)
+// @ConditionalOnProperty(name = "multitenancy.tenant.liquibase.enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(LiquibaseProperties.class)
 public class TenantLiquibaseConfig {
 
-    @Bean
-    @ConfigurationProperties("multitenancy.tenant.liquibase")
+    // @Bean
+    // @ConfigurationProperties("multitenancy.tenant.liquibase")
     public LiquibaseProperties tenantLiquibaseProperties() {
         return new LiquibaseProperties();
     }
 
-    @Bean
-    @DependsOn("masterLiquibase")
+    // @Bean
+    // @DependsOn("masterLiquibase")
     public DynamicDataSourceBasedMultiTenantSpringLiquibase tenantLiquibase() {
         return new DynamicDataSourceBasedMultiTenantSpringLiquibase();
     }

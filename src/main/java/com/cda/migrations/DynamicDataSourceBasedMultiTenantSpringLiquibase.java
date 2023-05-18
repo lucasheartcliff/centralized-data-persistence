@@ -51,8 +51,8 @@ public class DynamicDataSourceBasedMultiTenantSpringLiquibase implements Initial
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        log.info("DynamicDataSources based multitenancy enabled");
-        this.runOnAllTenants(tenantRepository.findAll());
+        // log.info("DynamicDataSources based multitenancy enabled");
+        // this.runOnAllTenants(tenantRepository.findAll());
     }
 
     protected void runOnAllTenants(Collection<Tenant> tenants) throws LiquibaseException {

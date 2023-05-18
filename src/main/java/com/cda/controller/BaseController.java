@@ -1,12 +1,16 @@
 package com.cda.controller;
 
+import javax.xml.ws.Response;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+
 import com.cda.RequestHandler;
 import com.cda.persistence.DatabaseContext;
-import com.cda.service.ServiceFactoryImpl;
+import com.cda.service.ServiceFactory;
 import com.cda.utils.functional.ThrowableConsumer;
 import com.cda.utils.functional.ThrowableFunction;
-
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public abstract class BaseController {
@@ -16,9 +20,9 @@ public abstract class BaseController {
     this.requestHandler = requestHandler;
   }
 
-  protected <T> T encapsulateRequest(ThrowableFunction<ServiceFactoryImpl, T> function) {
+  protected <T extends ResponseEntity<?>> T encapsulateRequest(ThrowableFunction<ServiceFactory, T> function) {
     try (DatabaseContext databaseContext = requestHandler.buildDatabaseContext();) {
-      ServiceFactoryImpl serviceFactory = requestHandler.buildServiceFactory(databaseContext);
+      ServiceFactory serviceFactory = requestHandler.buildServiceFactory(databaseContext);
       return function.apply(serviceFactory);
     } catch (Exception e) {
       System.out.println(e);
@@ -27,14 +31,19 @@ public abstract class BaseController {
     return null;
   }
 
-  protected void encapsulateRequest(ThrowableConsumer<ServiceFactoryImpl> function) {
+  protected void encapsulateRequest(ThrowableConsumer<ServiceFactory> function) {
     try (DatabaseContext databaseContext = requestHandler.buildDatabaseContext();) {
-      ServiceFactoryImpl serviceFactory = requestHandler.buildServiceFactory(databaseContext);
+      ServiceFactory serviceFactory = requestHandler.buildServiceFactory(databaseContext);
       function.run(serviceFactory);
     } catch (Exception e) {
       System.out.println(e);
       // log error
     }
+  }
+
+  protected ResponseEntity<?> buildOKResponse(){
+    return new ResponseEntity<>(HttpStatus.OK);
+        
   }
 
 }

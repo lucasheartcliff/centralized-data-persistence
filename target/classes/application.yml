@@ -3,9 +3,11 @@ multitenancy:
     maximumSize: 100
     expireAfterAccess: 1
   master:
-    url: jdbc:mysql://localhost:3306/cda-master?autoReconnect=true&characterEncoding=utf-8&useTimezone=true&serverTimezone=UTC&createDatabaseIfNotExist=true"
+    url: jdbc:mysql://localhost:3306/cda_master?autoReconnect=true&characterEncoding=utf-8&useTimezone=true&serverTimezone=UTC&createDatabaseIfNotExist=true"
     username: cda
     password:
+    entityManager:
+      packages: test
   tenant:
     urlPrefix: jdbc:mysql://localhost:3306/
     connection:

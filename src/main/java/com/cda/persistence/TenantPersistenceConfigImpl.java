@@ -27,32 +27,32 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import com.cda.multitenant.MultiTenantConnectionProvider;
 
 
-@Configuration
-@EnableJpaRepositories(
-        basePackages = { "${multitenancy.tenant.repository.packages}" },
-        entityManagerFactoryRef = "tenantEntityManagerFactory", 
-        transactionManagerRef = "tenantTransactionManager"
-)
-@EnableConfigurationProperties(JpaProperties.class)
+// @Configuration
+// @EnableJpaRepositories(
+//         basePackages = { "${multitenancy.tenant.repository.packages}" },
+//         entityManagerFactoryRef = "tenantEntityManagerFactory", 
+//         transactionManagerRef = "tenantTransactionManager"
+// )
+// @EnableConfigurationProperties(JpaProperties.class)
 public class TenantPersistenceConfigImpl {
 
     private final ConfigurableListableBeanFactory beanFactory;
     private final JpaProperties jpaProperties;
     private final String entityPackages;
 
-    @Autowired
+    // @Autowired
     public TenantPersistenceConfigImpl(
             ConfigurableListableBeanFactory beanFactory,
             JpaProperties jpaProperties,
-            @Value("${multitenancy.tenant.entityManager.packages}")
+            // @Value("${multitenancy.tenant.entityManager.packages}")
                     String entityPackages) {
         this.beanFactory = beanFactory;
         this.jpaProperties = jpaProperties;
         this.entityPackages = entityPackages;
     }
 
-    @Primary
-    @Bean
+    // @Primary
+    // @Bean
     public LocalContainerEntityManagerFactoryBean tenantEntityManagerFactory(
             @Qualifier("dynamicDataSourceBasedMultiTenantConnectionProvider") MultiTenantConnectionProvider connectionProvider,
             @Qualifier("currentTenantIdentifierResolver") CurrentTenantIdentifierResolver tenantResolver) {
@@ -75,8 +75,8 @@ public class TenantPersistenceConfigImpl {
         return emfBean;
     }
 
-    @Primary
-    @Bean
+    // @Primary
+    // @Bean
     public JpaTransactionManager tenantTransactionManager(
             @Qualifier("tenantEntityManagerFactory") EntityManagerFactory emf) {
         JpaTransactionManager tenantTransactionManager = new JpaTransactionManager();

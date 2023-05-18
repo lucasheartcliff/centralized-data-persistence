@@ -1,6 +1,6 @@
 #!/bin/bash
-USERNAME=mb
-DB_NAME=mbdb
+USERNAME=cda
+DB_NAME=cda_master
 
 mysql -u root -v $@  <<EOF
 -- delete database

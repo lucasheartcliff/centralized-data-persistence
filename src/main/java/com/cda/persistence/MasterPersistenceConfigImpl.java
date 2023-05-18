@@ -23,19 +23,19 @@ import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
-@Configuration
-@EnableJpaRepositories(
-        basePackages = { "${multitenancy.master.repository.packages}" },
-        entityManagerFactoryRef = "masterEntityManagerFactory",
-        transactionManagerRef = "masterTransactionManager"
-)
-@EnableConfigurationProperties({DataSourceProperties.class, JpaProperties.class})
+// @Configuration
+// @EnableJpaRepositories(
+//         // basePackages = { "${multitenancy.master.repository.packages}" },
+//         entityManagerFactoryRef = "masterEntityManagerFactory",
+//         transactionManagerRef = "masterTransactionManager"
+// )
+// @EnableConfigurationProperties({DataSourceProperties.class, JpaProperties.class})
 public class MasterPersistenceConfigImpl {
     private final ConfigurableListableBeanFactory beanFactory;
     private final JpaProperties jpaProperties;
     private final String entityPackages;
 
-    @Autowired
+    // @Autowired
     public MasterPersistenceConfigImpl(ConfigurableListableBeanFactory beanFactory,
                                    JpaProperties jpaProperties,
                                    @Value("${multitenancy.master.entityManager.packages}")
@@ -45,7 +45,7 @@ public class MasterPersistenceConfigImpl {
         this.entityPackages = entityPackages;
     }
 
-    @Bean
+    // @Bean
     public LocalContainerEntityManagerFactoryBean masterEntityManagerFactory(
             @Qualifier("masterDataSource") DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
@@ -66,7 +66,7 @@ public class MasterPersistenceConfigImpl {
         return em;
     }
 
-    @Bean
+    // @Bean
     public JpaTransactionManager masterTransactionManager(
             @Qualifier("masterEntityManagerFactory") EntityManagerFactory emf) {
         JpaTransactionManager transactionManager = new JpaTransactionManager();

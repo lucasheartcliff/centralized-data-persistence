@@ -17,7 +17,7 @@ public class Tenant {
     @Column()
     private String id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String db;
 
     @Column(nullable = false)
