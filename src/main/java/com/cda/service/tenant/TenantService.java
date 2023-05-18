@@ -17,11 +17,15 @@ import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import com.cda.entities.Tenant;
+import com.cda.exceptions.TenantCreationException;
 import com.cda.multitenant.EncryptionService;
 import com.cda.persistence.TransactionHandler;
-import com.cda.repository.RepositoryFactoryImpl;
+import com.cda.repository.RepositoryFactory;
 import com.cda.repository.tenant.TenantRepository;
 import com.cda.service.BaseService;
+
+import liquibase.exception.LiquibaseException;
+import liquibase.integration.spring.SpringLiquibase;
 
 public class TenantService extends BaseService{
 
@@ -30,19 +34,17 @@ public class TenantService extends BaseService{
     private final JdbcTemplate jdbcTemplate;
     private final LiquibaseProperties liquibaseProperties;
     private final ResourceLoader resourceLoader;
-    private final TenantRepository tenantRepository;
 
     private final String urlPrefix;
     private final String secret;
     private final String salt;
 
-  public TenantService(RepositoryFactoryImpl repositoryFactory, TransactionHandler transactionHandler,EncryptionService encryptionService,
+  public TenantService(RepositoryFactory repositoryFactory, TransactionHandler transactionHandler,EncryptionService encryptionService,
                                        DataSource dataSource,
                                        JdbcTemplate jdbcTemplate,
                                        @Qualifier("tenantLiquibaseProperties")
                                        LiquibaseProperties liquibaseProperties,
                                        ResourceLoader resourceLoader,
-                                       TenantRepository tenantRepository,
                                        @Value("${multitenancy.tenant.datasource.url-prefix}")
                                        String urlPrefix,
                                        @Value("${encryption.secret}")
@@ -56,7 +58,6 @@ public class TenantService extends BaseService{
         this.jdbcTemplate = jdbcTemplate;
         this.liquibaseProperties = liquibaseProperties;
         this.resourceLoader = resourceLoader;
-        this.tenantRepository = tenantRepository;
         this.urlPrefix = urlPrefix;
         this.secret = secret;
         this.salt = salt;
@@ -64,7 +65,6 @@ public class TenantService extends BaseService{
 
     private static final String VALID_DATABASE_NAME_REGEXP = "[A-Za-z0-9_]*";
 
-    @Override
     public void create(String tenantId, String db, String password) {
 
         // Verify db string to prevent SQL injection
@@ -79,18 +79,23 @@ public class TenantService extends BaseService{
         } catch (DataAccessException e) {
               throw new TenantCreationException("Error when creating db: " + db, e);
         }
-        try (Connection connection = DriverManager.getConnection(url, db, password)) {
+   
+
+    try (Connection connection = DriverManager.getConnection(url, db, password)) {
             DataSource tenantDataSource = new SingleConnectionDataSource(connection, false);
             runLiquibase(tenantDataSource);
         } catch (SQLException | LiquibaseException e) {
             throw new TenantCreationException("Error when populating db: ", e);
         }
-        Tenant tenant = Tenant.builder()
-                .tenantId(tenantId)
+   
+    Tenant tenant = Tenant.builder()
+                .id(tenantId)
                 .db(db)
                 .url(url)
                 .password(encryptedPassword)
                 .build();
+    
+        TenantRepository tenantRepository = repositoryFactory.buildTenantRepository();
         tenantRepository.save(tenant);
     }
 
@@ -114,7 +119,6 @@ public class TenantService extends BaseService{
         liquibase.setDataSource(dataSource);
         liquibase.setChangeLog(liquibaseProperties.getChangeLog());
         liquibase.setContexts(liquibaseProperties.getContexts());
-...
         return liquibase;
     }
 }

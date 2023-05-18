@@ -2,7 +2,7 @@ package com.cda.controller;
 
 import com.cda.RequestHandler;
 import com.cda.persistence.DatabaseContext;
-import com.cda.service.ServiceFactory;
+import com.cda.service.ServiceFactoryImpl;
 import com.cda.utils.functional.ThrowableConsumer;
 import com.cda.utils.functional.ThrowableFunction;
 
@@ -16,9 +16,9 @@ public abstract class BaseController {
     this.requestHandler = requestHandler;
   }
 
-  protected <T> T encapsulateRequest(ThrowableFunction<ServiceFactory, T> function) {
+  protected <T> T encapsulateRequest(ThrowableFunction<ServiceFactoryImpl, T> function) {
     try (DatabaseContext databaseContext = requestHandler.buildDatabaseContext();) {
-      ServiceFactory serviceFactory = requestHandler.buildServiceFactory(databaseContext);
+      ServiceFactoryImpl serviceFactory = requestHandler.buildServiceFactory(databaseContext);
       return function.apply(serviceFactory);
     } catch (Exception e) {
       System.out.println(e);
@@ -27,9 +27,9 @@ public abstract class BaseController {
     return null;
   }
 
-  protected void encapsulateRequest(ThrowableConsumer<ServiceFactory> function) {
+  protected void encapsulateRequest(ThrowableConsumer<ServiceFactoryImpl> function) {
     try (DatabaseContext databaseContext = requestHandler.buildDatabaseContext();) {
-      ServiceFactory serviceFactory = requestHandler.buildServiceFactory(databaseContext);
+      ServiceFactoryImpl serviceFactory = requestHandler.buildServiceFactory(databaseContext);
       function.run(serviceFactory);
     } catch (Exception e) {
       System.out.println(e);

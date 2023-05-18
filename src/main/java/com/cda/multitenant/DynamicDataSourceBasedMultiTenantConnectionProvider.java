@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.stereotype.Component;
 
-import com.cda.model.Tenant;
+import com.cda.entities.Tenant;
 import com.cda.repository.tenant.TenantRepository;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
