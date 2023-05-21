@@ -18,6 +18,7 @@ public class ServletInitializer extends SpringBootServletInitializer {
   @Override
   protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
     ApplicationProperties properties = getPropertiesOrFail();
+
     PersistenceService persistenceService = new PersistenceServiceImpl();
     EntityManagerFactory entityManagerFactory = persistenceService.buildEntityManagerFactory(properties);
 

@@ -19,5 +19,4 @@ encryption:
   salt: triforce
 
 dbms:
-  name: mariadb # Availab<maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>le options: (mariadb, mysql, postgres, oracle, sql_server)
+  name: mariadb # Available options: (mariadb, mysql, postgres, oracle, sql_server)

@@ -1,6 +1,7 @@
 package com.cda.configuration;
 
 import java.util.Properties;
+
 import org.springframework.context.annotation.Configuration;
 
 @Configuration

@@ -31,10 +31,7 @@ public class ServiceFactoryImpl implements ServiceFactory {
         buildEncryptionService(),
         null,
         null,
-        null,
-        applicationProperties.getTenantUrlPrefix(),
-        applicationProperties.getSecret(),
-        applicationProperties.getSalt());
+        applicationProperties);
   }
 
   private EncryptionService buildEncryptionService() {

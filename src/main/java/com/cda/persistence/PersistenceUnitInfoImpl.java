@@ -15,12 +15,20 @@ import javax.persistence.spi.ClassTransformer;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
+import lombok.AllArgsConstructor;
 import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
+import org.reflections.util.ConfigurationBuilder;
 
+@AllArgsConstructor
 public class PersistenceUnitInfoImpl implements PersistenceUnitInfo {
+  private String persistenceUnitName;
+  private String packageName;
+  private ClassLoader classLoader;
+
   @Override
   public String getPersistenceUnitName() {
-    return "cda-master";
+    return persistenceUnitName;
   }
 
   @Override
@@ -94,7 +102,7 @@ public class PersistenceUnitInfoImpl implements PersistenceUnitInfo {
 
   @Override
   public ClassLoader getClassLoader() {
-    return ClassLoader.getSystemClassLoader();
+    return classLoader;
   }
 
   @Override
@@ -108,7 +116,17 @@ public class PersistenceUnitInfoImpl implements PersistenceUnitInfo {
   }
 
   private Set<Class<?>> getClasses() {
-    Reflections reflections = new Reflections("com.cda.entities");
+    Reflections reflections =
+        new Reflections(
+            new ConfigurationBuilder()
+                .forPackage(packageName)
+                .setScanners(Scanners.values())
+                .addClassLoaders(getClassLoader()));
     return reflections.getTypesAnnotatedWith(Entity.class);
+  }
+
+  @Override
+  public String toString() {
+    return "PersistenceUnitInfoImpl []";
   }
 }

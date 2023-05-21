@@ -4,14 +4,14 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
-@Builder
+@AllArgsConstructor
 public class Tenant {
     @Id
     @Column()
@@ -25,5 +25,9 @@ public class Tenant {
 
     @Column(nullable = false)
     private String url;
+
+    @Column(nullable = false)
+    private String packageName;
+
 
 }
