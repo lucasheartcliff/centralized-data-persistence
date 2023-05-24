@@ -15,17 +15,19 @@ import static org.hibernate.cfg.AvailableSettings.USE_REFLECTION_OPTIMIZER;
 import static org.hibernate.cfg.AvailableSettings.USE_SECOND_LEVEL_CACHE;
 import static org.hibernate.cfg.AvailableSettings.USE_STRUCTURED_CACHE;
 
-import com.cda.configuration.ApplicationProperties;
-import com.cda.utils.JdbcDriver;
-import com.google.common.collect.ImmutableMap;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceUnitInfo;
+
 import org.hibernate.dialect.MySQL5Dialect;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Service;
 
-@Configuration
+import com.cda.configuration.ApplicationProperties;
+import com.cda.utils.JdbcDriver;
+import com.google.common.collect.ImmutableMap;
+
+@Service
 public class PersistenceServiceImpl implements PersistenceService {
   @Override
   @Bean
