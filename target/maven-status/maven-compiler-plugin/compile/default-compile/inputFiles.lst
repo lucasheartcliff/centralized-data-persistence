@@ -16,7 +16,6 @@
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/multitenant/CurrentTenantIdentifierResolverImpl.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/repository/BaseRepository.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/configuration/ApplicationProperties.java
-/home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/ServletInitializer.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/utils/EncryptionServiceImpl.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/controller/HomeController.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/controller/TenantController.java

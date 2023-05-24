@@ -31,24 +31,19 @@ import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceUnitInfo;
-import javax.sql.DataSource;
-import liquibase.exception.LiquibaseException;
-import liquibase.integration.spring.SpringLiquibase;
 import org.hibernate.dialect.MySQL5Dialect;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.StatementCallback;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 public class TenantService extends BaseService {
   private final EncryptionService encryptionService;
-  private final LiquibaseProperties liquibaseProperties;
-  private final ResourceLoader resourceLoader;
 
   private final ApplicationProperties properties;
 
@@ -56,13 +51,9 @@ public class TenantService extends BaseService {
       RepositoryFactory repositoryFactory,
       TransactionHandler transactionHandler,
       EncryptionService encryptionService,
-      LiquibaseProperties liquibaseProperties,
-      ResourceLoader resourceLoader,
       ApplicationProperties properties) {
     super(repositoryFactory, transactionHandler);
     this.encryptionService = encryptionService;
-    this.liquibaseProperties = liquibaseProperties;
-    this.resourceLoader = resourceLoader;
     this.properties = properties;
   }
 
@@ -120,60 +111,46 @@ public class TenantService extends BaseService {
           String encryptedPassword =
               encryptionService.encrypt(password, properties.getSecret(), properties.getSalt());
 
-          try {
-            createDatabase(db, password);
-          } catch (DataAccessException e) {
-            throw new TenantCreationException("Error when creating db: " + db, e);
-          }
-
-          //  try (Connection connection = DriverManager.getConnection(url, db, password)) {
-          //          DataSource tenantDataSource = new SingleConnectionDataSource(connection,
-          // false);
-          //          runLiquibase(tenantDataSource);
-          //      } catch (SQLException | LiquibaseException e) {
-          //          throw new TenantCreationException("Error when populating db: ", e);
-          //      }
-          //
           Tenant tenant = new Tenant(tenantId, db, encryptedPassword, url, model.getPackageName());
-
           TenantRepository tenantRepository = repositoryFactory.buildTenantRepository();
-          return tenantRepository.save(tenant);
+          tenant = tenantRepository.save(tenant);
+          createDatabase(db, password, tenantId);
+
+          return tenant;
         });
   }
 
-  private JdbcTemplate buildJdbcTemplate() {
-    DriverManagerDataSource dataSource = new DriverManagerDataSource();
-    dataSource.setUrl(properties.getMasterUrl());
-    dataSource.setUsername(properties.getMasterUser());
-    dataSource.setPassword(properties.getMasterPassword());
-
-    return new JdbcTemplate(dataSource);
+  private Connection createMasterConnection() throws SQLException {
+    return DriverManager.getConnection(
+        properties.getTenantUrlPrefix(),
+        properties.getMasterUser(),
+        properties.getMasterPassword());
   }
 
-  private void createDatabase(String db, String password) {
-    JdbcTemplate jdbcTemplate = buildJdbcTemplate();
-    jdbcTemplate.execute(
-        (StatementCallback<Boolean>) stmt -> stmt.execute("CREATE DATABASE " + db));
-    jdbcTemplate.execute(
-        (StatementCallback<Boolean>)
-            stmt ->
-                stmt.execute("CREATE USER " + db + " WITH ENCRYPTED PASSWORD '" + password + "'"));
-    jdbcTemplate.execute(
-        (StatementCallback<Boolean>)
-            stmt -> stmt.execute("GRANT ALL PRIVILEGES ON DATABASE " + db + " TO " + db));
-  }
+  private void createDatabase(String db, String password, String tenantId) {
+    try (Connection connection = createMasterConnection()) {
+      // Create database
+      String createDatabaseSql = "CREATE DATABASE " + db;
+      try (Statement statement = connection.createStatement()) {
+        statement.executeUpdate(createDatabaseSql);
+      }
 
-  private void runLiquibase(DataSource dataSource) throws LiquibaseException {
-    SpringLiquibase liquibase = getSpringLiquibase(dataSource);
-    liquibase.afterPropertiesSet();
-  }
+      // Create user
+      String createUserSql = "CREATE USER " + db + " IDENTIFIED BY '" + password + "'";
+      try (Statement statement = connection.createStatement()) {
+        statement.executeUpdate(createUserSql);
+      }
 
-  protected SpringLiquibase getSpringLiquibase(DataSource dataSource) {
-    SpringLiquibase liquibase = new SpringLiquibase();
-    liquibase.setResourceLoader(resourceLoader);
-    liquibase.setDataSource(dataSource);
-    liquibase.setChangeLog(liquibaseProperties.getChangeLog());
-    liquibase.setContexts(liquibaseProperties.getContexts());
-    return liquibase;
+      // Grant privileges to user
+      String grantPrivilegesSql = "GRANT ALL PRIVILEGES ON DATABASE " + db + " TO " + db;
+      try (Statement statement = connection.createStatement()) {
+        statement.executeUpdate(grantPrivilegesSql);
+      }
+
+      System.out.println("Database and user created successfully.");
+    } catch (Exception e) {
+      throw new TenantCreationException(
+          "Error while creating credentials for tenant '" + tenantId + "'", e);
+    }
   }
 }

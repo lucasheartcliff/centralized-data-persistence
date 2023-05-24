@@ -2,9 +2,11 @@ package com.cda.configuration;
 
 import java.util.Properties;
 
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
-@Configuration
+@Component
+@ConfigurationProperties
 public class ApplicationProperties extends Properties {
   public String getSecret() {
     return getProperty("encryption.secret");

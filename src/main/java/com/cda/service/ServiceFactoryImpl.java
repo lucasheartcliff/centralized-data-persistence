@@ -29,8 +29,6 @@ public class ServiceFactoryImpl implements ServiceFactory {
         repositoryFactory,
         getTransactionHandler(),
         buildEncryptionService(),
-        null,
-        null,
         applicationProperties);
   }
 

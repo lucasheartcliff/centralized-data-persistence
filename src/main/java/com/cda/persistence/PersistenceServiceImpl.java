@@ -30,7 +30,7 @@ public class PersistenceServiceImpl implements PersistenceService {
   @Override
   @Bean
   public EntityManagerFactory buildEntityManagerFactory(ApplicationProperties properties) {
-    JdbcDriver dbmsType = JdbcDriver.valueOf(properties.getDbmsName());
+    JdbcDriver dbmsType = JdbcDriver.MARIADB;
     return new HibernatePersistenceProvider()
         .createContainerEntityManagerFactory(
             buildPersistenceUnitInfo(),

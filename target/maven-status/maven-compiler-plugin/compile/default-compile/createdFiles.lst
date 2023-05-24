@@ -38,4 +38,3 @@ com/cda/persistence/PersistenceServiceImpl.class
 com/cda/persistence/PersistenceUnitInfoImpl.class
 com/cda/multitenant/TenantInterceptor.class
 com/cda/multitenant/TenantAwareTaskDecorator.class
-com/cda/ServletInitializer.class

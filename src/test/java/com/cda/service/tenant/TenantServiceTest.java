@@ -16,9 +16,6 @@ public class TenantServiceTest extends BaseServiceTest {
             buildMockRepositoryFacotry(),
             buildTransactionHandler(),
             buildMockEncryptionService(),
-            null,
-            null,
-            null
-            );
+            null);
   }
 }
