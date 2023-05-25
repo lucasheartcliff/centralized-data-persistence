@@ -33,8 +33,14 @@ public class ApplicationProperties extends Properties {
   public String getMasterUrl() {
     return getProperty("multitenancy.master.url");
   }
+  public String getTenantPort(){
+    return getProperty("multitenancy.tenant.port");
+  }
 
+  public String getTenantHost(){
+    return getProperty("multitenancy.tenant.host");
+  }
   public String getTenantUrlPrefix() {
-    return getProperty("multitenancy.tenant.url-prefix");
+    return "jdbc:"+ getDbmsName() + "//"+getTenantHost()+":"+ getTenantPort()+"/";
   }
 }

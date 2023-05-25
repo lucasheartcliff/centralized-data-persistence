@@ -9,7 +9,8 @@ multitenancy:
     entityManager:
       packages: test
   tenant:
-    urlPrefix: jdbc:mysql://localhost:3306/
+    host: localhost
+    port: 3306
     connection:
       maximumPoolSize: 5
       minimumIdle: 0

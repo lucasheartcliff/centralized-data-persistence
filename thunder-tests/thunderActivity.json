@@ -1,0 +1,21 @@
+[
+  {
+    "_id": "ccd3d809-7313-4e79-bd21-4217abb1cec1",
+    "colId": "history",
+    "containerId": "",
+    "name": "localhost:8080/api/tenant",
+    "url": "localhost:8080/api/tenant",
+    "method": "POST",
+    "sortNum": 0,
+    "created": "2023-05-25T20:06:50.689Z",
+    "modified": "2023-05-25T21:19:03.188Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"name\":\"tenant2\",\n  \"password\":\"tenant2_password\",\n  \"packageName\":\"com.tenant2.model\"\n}",
+      "form": []
+    },
+    "tests": []
+  }
+]

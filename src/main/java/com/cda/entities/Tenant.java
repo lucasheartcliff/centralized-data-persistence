@@ -13,6 +13,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class Tenant {
+
     @Id
     @Column()
     private String id;
@@ -28,6 +29,9 @@ public class Tenant {
 
     @Column(nullable = false)
     private String packageName;
+
+    public Tenant() {
+    }
 
 
 }

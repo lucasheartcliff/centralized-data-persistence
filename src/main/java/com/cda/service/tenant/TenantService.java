@@ -39,8 +39,6 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceUnitInfo;
 import org.hibernate.dialect.MySQL5Dialect;
 import org.hibernate.jpa.HibernatePersistenceProvider;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
-import org.springframework.core.io.ResourceLoader;
 
 public class TenantService extends BaseService {
   private final EncryptionService encryptionService;
@@ -122,29 +120,32 @@ public class TenantService extends BaseService {
 
   private Connection createMasterConnection() throws SQLException {
     return DriverManager.getConnection(
-        properties.getTenantUrlPrefix(),
-        properties.getMasterUser(),
-        properties.getMasterPassword());
+        properties.getMasterUrl(), properties.getMasterUser(), properties.getMasterPassword());
   }
 
   private void createDatabase(String db, String password, String tenantId) {
     try (Connection connection = createMasterConnection()) {
       // Create database
-      String createDatabaseSql = "CREATE DATABASE " + db;
+      String createDatabaseSql = "CREATE DATABASE IF NOT EXISTS " + db;
       try (Statement statement = connection.createStatement()) {
-        statement.executeUpdate(createDatabaseSql);
+        statement.execute(createDatabaseSql);
+      }
+
+      String dropUserSql = "DROP USER IF EXISTS " + tenantId;
+      try (Statement statement = connection.createStatement()) {
+        statement.execute(dropUserSql);
       }
 
       // Create user
-      String createUserSql = "CREATE USER " + db + " IDENTIFIED BY '" + password + "'";
+      String createUserSql = "CREATE USER " + tenantId + " IDENTIFIED BY '" + password + "'";
       try (Statement statement = connection.createStatement()) {
-        statement.executeUpdate(createUserSql);
+        statement.execute(createUserSql);
       }
 
       // Grant privileges to user
-      String grantPrivilegesSql = "GRANT ALL PRIVILEGES ON DATABASE " + db + " TO " + db;
+      String grantPrivilegesSql = "GRANT ALL PRIVILEGES ON " + db + " TO " + tenantId;
       try (Statement statement = connection.createStatement()) {
-        statement.executeUpdate(grantPrivilegesSql);
+        statement.execute(grantPrivilegesSql);
       }
 
       System.out.println("Database and user created successfully.");
