@@ -1,0 +1,41 @@
+package com.cda.multitenant;
+
+import com.cda.exceptions.TenantContextException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
+@Service
+@Scope("singleton")
+public class TenantEntityManagerFactoryContext {
+  private final Map<String, EntityManagerFactory> factoriesRepository;
+
+  public TenantEntityManagerFactoryContext() {
+    factoriesRepository = new ConcurrentHashMap<>();
+  }
+
+  public void register(String tenantId, EntityManagerFactory factory) {
+    if (tenantId == null || factory == null || !factory.isOpen())
+      throw new TenantContextException("There are invalid values on tenant factory registry");
+    factoriesRepository.put(tenantId, factory);
+  }
+
+  public void unregister(String tenantId) {
+    EntityManagerFactory factory = factoriesRepository.remove(tenantId);
+    if (factory != null && factory.isOpen()) factory.close();
+  }
+
+  public EntityManager createEntityManager(String tenantId) {
+    if (tenantId == null)
+      throw new TenantContextException("There are invalid values on tenant factory registry");
+
+    if (!factoriesRepository.containsKey(tenantId))
+      throw new TenantContextException(
+          "There is no factory registered for tenant: '" + tenantId + "'");
+    return factoriesRepository.get(tenantId).createEntityManager();
+  }
+}

@@ -11,6 +11,7 @@ public class TenantServiceTest extends BaseServiceTest {
   @Test
   public void shouldCreateEntityManagerFactoryForTenant() {
     String urlPrefix = "jdbc:mysql://localhost:3306/";
+
     TenantService tenantService =
         new TenantService(
             buildMockRepositoryFacotry(),

@@ -2,6 +2,7 @@ package com.cda.service;
 
 import static org.mockito.Mockito.*;
 
+import com.cda.configuration.ApplicationProperties;
 import com.cda.persistence.TransactionHandler;
 import com.cda.repository.RepositoryFactory;
 import com.cda.repository.tenant.TenantRepository;

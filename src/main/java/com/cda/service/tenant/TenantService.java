@@ -17,7 +17,7 @@ import static org.hibernate.cfg.AvailableSettings.USE_STRUCTURED_CACHE;
 
 import com.cda.configuration.ApplicationProperties;
 import com.cda.entities.Tenant;
-import com.cda.exceptions.TenantConnectionException;
+import com.cda.exceptions.TenantContextException;
 import com.cda.exceptions.TenantCreationException;
 import com.cda.model.TenantInputModel;
 import com.cda.persistence.PersistenceUnitInfoImpl;
@@ -35,6 +35,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Optional;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceUnitInfo;
 import org.hibernate.dialect.MySQL5Dialect;
@@ -88,7 +89,7 @@ public class TenantService extends BaseService {
                   .put(STATEMENT_BATCH_SIZE, 25)
                   .build());
     } catch (Exception e) {
-      throw new TenantConnectionException(
+      throw new TenantContextException(
           "Error while creating connection for tenant \"" + tenant.getId() + "\"", e);
     }
   }
@@ -100,21 +101,30 @@ public class TenantService extends BaseService {
           String password = model.getPassword();
           String db = "tenant_" + tenantId;
 
-          // Verify db string to prevent SQL injection
-          if (!db.matches(VALID_DATABASE_NAME_REGEXP)) {
-            throw new TenantCreationException("Invalid db name: " + db);
-          }
-
-          String url = properties.getTenantUrlPrefix() + db;
-          String encryptedPassword =
-              encryptionService.encrypt(password, properties.getSecret(), properties.getSalt());
-
-          Tenant tenant = new Tenant(tenantId, db, encryptedPassword, url, model.getPackageName());
           TenantRepository tenantRepository = repositoryFactory.buildTenantRepository();
-          tenant = tenantRepository.save(tenant);
-          createDatabase(db, password, tenantId);
+          Optional<Tenant> tenantOptional = tenantRepository.findById(tenantId);
+          if (tenantOptional.isPresent()) {
+            Tenant tenant = tenantOptional.get();
+            tenant.setPackageName(model.getPackageName());
 
-          return tenant;
+            return tenantRepository.save(tenant);
+          } else {
+
+            // Verify db string to prevent SQL injection
+            if (!db.matches(VALID_DATABASE_NAME_REGEXP)) {
+              throw new TenantCreationException("Invalid db name: " + db);
+            }
+
+            String url = properties.getTenantUrlPrefix() + db;
+            String encryptedPassword =
+                encryptionService.encrypt(password, properties.getSecret(), properties.getSalt());
+
+            Tenant tenant =
+                new Tenant(tenantId, db, encryptedPassword, url, model.getPackageName());
+            tenant = tenantRepository.save(tenant);
+            createDatabase(db, password, tenantId);
+            return tenant;
+          }
         });
   }
 

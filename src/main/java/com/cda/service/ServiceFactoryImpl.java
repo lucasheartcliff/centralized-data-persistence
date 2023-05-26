@@ -1,6 +1,7 @@
 package com.cda.service;
 
 import com.cda.configuration.ApplicationProperties;
+import com.cda.multitenant.TenantEntityManagerFactoryContext;
 import com.cda.persistence.DatabaseContext;
 import com.cda.persistence.TransactionHandler;
 import com.cda.repository.RepositoryFactory;
@@ -12,15 +13,18 @@ public class ServiceFactoryImpl implements ServiceFactory {
   private final RepositoryFactory repositoryFactory;
   private final DatabaseContext databaseContext;
   private final ApplicationProperties applicationProperties;
-
+  private final TenantEntityManagerFactoryContext tenantEntityManagerFactoryContext;
+  
   private TransactionHandler cachedTransactionHandler;
 
   public ServiceFactoryImpl(
       RepositoryFactory repositoryFactory,
       DatabaseContext databaseContext,
+    TenantEntityManagerFactoryContext tenantEntityManagerFactoryContext,
       ApplicationProperties properties) {
     this.repositoryFactory = repositoryFactory;
     this.databaseContext = databaseContext;
+    this.tenantEntityManagerFactoryContext = tenantEntityManagerFactoryContext;
     this.applicationProperties = properties;
   }
 
