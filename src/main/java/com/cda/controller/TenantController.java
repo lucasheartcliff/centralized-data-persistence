@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cda.RequestHandler;
 import com.cda.model.TenantInputModel;
+import com.cda.model.TenantQueryInputModel;
 import com.cda.service.tenant.TenantService;
 
 @RestController
@@ -24,9 +25,21 @@ public class TenantController extends BaseController {
     return encapsulateRequest(
         (serviceFactory) -> {
         TenantService tenantService = serviceFactory.buildTenantService();
-          tenantService.create(model);
+          tenantService.register(model);
 
           return buildOKResponse();
         });
   }
+
+  @PostMapping("/query")
+  public ResponseEntity<?> executeQuery(@RequestBody TenantQueryInputModel model) {
+    return encapsulateRequest(
+        (serviceFactory) -> {
+        TenantService tenantService = serviceFactory.buildTenantService();
+
+          return buildOKResponse();
+        });
+  }
+
+  
 }

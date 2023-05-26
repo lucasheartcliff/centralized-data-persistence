@@ -5,6 +5,7 @@ import com.cda.persistence.DatabaseContext;
 import com.cda.service.ServiceFactory;
 import com.cda.utils.functional.ThrowableConsumer;
 import com.cda.utils.functional.ThrowableFunction;
+import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public abstract class BaseController {
   private final RequestHandler requestHandler;
+  protected static final Gson gson = new Gson();
 
   protected BaseController(RequestHandler requestHandler) {
     this.requestHandler = requestHandler;
@@ -38,8 +40,11 @@ public abstract class BaseController {
       function.run(serviceFactory);
     } catch (Exception e) {
       log.error(e.getMessage(), e);
-
     }
+  }
+
+  protected ResponseEntity<?> buildOKResponse(Object rawBody) {
+    return new ResponseEntity<>(gson.toJsonTree(rawBody), HttpStatus.OK);
   }
 
   protected ResponseEntity<?> buildOKResponse() {

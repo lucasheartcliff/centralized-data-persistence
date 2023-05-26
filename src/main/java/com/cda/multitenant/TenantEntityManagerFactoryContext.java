@@ -25,6 +25,8 @@ public class TenantEntityManagerFactoryContext {
   }
 
   public void unregister(String tenantId) {
+    if(!factoriesRepository.containsKey(tenantId)) return;
+
     EntityManagerFactory factory = factoriesRepository.remove(tenantId);
     if (factory != null && factory.isOpen()) factory.close();
   }

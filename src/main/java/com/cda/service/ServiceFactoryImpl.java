@@ -6,6 +6,7 @@ import com.cda.persistence.DatabaseContext;
 import com.cda.persistence.TransactionHandler;
 import com.cda.repository.RepositoryFactory;
 import com.cda.service.tenant.TenantService;
+import com.cda.service.tenant.TenantServiceImpl;
 import com.cda.utils.EncryptionService;
 import com.cda.utils.EncryptionServiceImpl;
 
@@ -29,10 +30,11 @@ public class ServiceFactoryImpl implements ServiceFactory {
   }
 
   public TenantService buildTenantService() {
-    return new TenantService(
+    return new TenantServiceImpl(
         repositoryFactory,
         getTransactionHandler(),
         buildEncryptionService(),
+      tenantEntityManagerFactoryContext,
         applicationProperties);
   }
 

@@ -16,7 +16,6 @@ com/cda/RequestHandler.class
 com/cda/multitenant/AsyncConfig.class
 com/cda/multitenant/CurrentTenantIdentifierResolverImpl.class
 com/cda/controller/TenantController.class
-com/cda/exceptions/TenantCreationException.class
 com/cda/repository/RepositoryFactoryImpl.class
 com/cda/utils/functional/ThrowableSupplier.class
 com/cda/utils/JdbcDriver.class

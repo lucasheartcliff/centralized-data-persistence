@@ -2,7 +2,6 @@ package com.cda.service;
 
 import static org.mockito.Mockito.*;
 
-import com.cda.configuration.ApplicationProperties;
 import com.cda.persistence.TransactionHandler;
 import com.cda.repository.RepositoryFactory;
 import com.cda.repository.tenant.TenantRepository;
@@ -29,7 +28,7 @@ public abstract class BaseServiceTest {
   protected TransactionHandler buildTransactionHandler() {
     TransactionHandler transactionHandler = mock(TransactionHandler.class);
     try {
-      when(transactionHandler.encapsulateTransaction(any()))
+      when(transactionHandler.encapsulateTransaction(any(ThrowableSupplier.class)))
           .thenAnswer(
               arg -> {
                 try {
