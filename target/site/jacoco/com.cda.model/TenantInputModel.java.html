@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TenantInputModel.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Centralized Data Access</a> &gt; <a href="index.source.html" class="el_package">com.cda.model</a> &gt; <span class="el_source">TenantInputModel.java</span></div><h1>TenantInputModel.java</h1><pre class="source lang-java linenums">package com.cda.model;
+
+import com.cda.api.TenantRegistry;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
+@Getter
+<span class="nc" id="L17">@Setter</span>
+<span class="fc" id="L18">@AllArgsConstructor</span>
+<span class="fc" id="L19">@Slf4j</span>
+public class TenantInputModel implements TenantRegistry {
+  private String name;
+<span class="fc" id="L22">  private String password;</span>
+<span class="fc" id="L23">  private String packageName;</span>
+<span class="nc" id="L24">  private String file;</span>
+
+  public File convertToJarFile() {
+    try {
+<span class="pc bpc" id="L28" title="2 of 4 branches missed.">      if (file == null || file.isEmpty()) return null;</span>
+<span class="fc" id="L29">      return fromBase64ToFile();</span>
+<span class="nc" id="L30">    } catch (IOException e) {</span>
+<span class="nc" id="L31">      throw new RuntimeException(e);</span>
+    }
+  }
+
+  private File fromBase64ToFile() throws IOException {
+    try {
+<span class="fc" id="L37">      byte[] jarBytes = Base64.getDecoder().decode(file);</span>
+<span class="fc" id="L38">      Path jarPath = Files.createTempFile(UUID.randomUUID().toString(), &quot;.jar&quot;);</span>
+<span class="fc" id="L39">      String tempJarFilePath = jarPath.toAbsolutePath().toString();</span>
+
+<span class="fc" id="L41">      try (FileOutputStream fos = new FileOutputStream(tempJarFilePath)) {</span>
+<span class="fc" id="L42">        fos.write(jarBytes);</span>
+<span class="fc" id="L43">        log.info(&quot;Base64 string converted to JAR file successfully.\nFile: &quot; + tempJarFilePath);</span>
+      }
+
+<span class="fc" id="L46">      return new File(tempJarFilePath);</span>
+<span class="nc" id="L47">    } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L48">      log.error(&quot;Invalid Base64 string&quot;, e);</span>
+<span class="nc" id="L49">      throw new RuntimeException(e);</span>
+    }
+  }
+
+  @Override
+  public String getName() {
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">    return name == null ? null : name.toLowerCase();</span>
+  }
+
+  @Override
+  public String toJson() {
+<span class="nc" id="L60">    return &quot;&quot;;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

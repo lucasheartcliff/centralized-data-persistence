@@ -1,6 +1,8 @@
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/service/tenant/TenantService.java
+/home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/api/TenantRegistry.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/utils/functional/ThrowableConsumer.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/persistence/DatabaseContextImpl.java
+/home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/api/TenantRegistryModel.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/service/BaseService.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/model/TenantInputModel.java
 /home/lucasheartcliff/projects/multitenant-database-persistence/src/main/java/com/cda/service/ServiceFactory.java

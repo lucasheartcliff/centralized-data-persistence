@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TenantServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Centralized Data Access</a> &gt; <a href="index.source.html" class="el_package">com.cda.service.tenant</a> &gt; <span class="el_source">TenantServiceImpl.java</span></div><h1>TenantServiceImpl.java</h1><pre class="source lang-java linenums">package com.cda.service.tenant;
+
+import static org.hibernate.cfg.AvailableSettings.DIALECT;
+import static org.hibernate.cfg.AvailableSettings.GENERATE_STATISTICS;
+import static org.hibernate.cfg.AvailableSettings.HBM2DDL_AUTO;
+import static org.hibernate.cfg.AvailableSettings.JPA_JDBC_DRIVER;
+import static org.hibernate.cfg.AvailableSettings.JPA_JDBC_URL;
+import static org.hibernate.cfg.AvailableSettings.PASS;
+import static org.hibernate.cfg.AvailableSettings.QUERY_STARTUP_CHECKING;
+import static org.hibernate.cfg.AvailableSettings.SHOW_SQL;
+import static org.hibernate.cfg.AvailableSettings.STATEMENT_BATCH_SIZE;
+import static org.hibernate.cfg.AvailableSettings.USER;
+import static org.hibernate.cfg.AvailableSettings.USE_QUERY_CACHE;
+import static org.hibernate.cfg.AvailableSettings.USE_REFLECTION_OPTIMIZER;
+import static org.hibernate.cfg.AvailableSettings.USE_SECOND_LEVEL_CACHE;
+import static org.hibernate.cfg.AvailableSettings.USE_STRUCTURED_CACHE;
+
+import com.cda.configuration.ApplicationProperties;
+import com.cda.entities.Tenant;
+import com.cda.exceptions.TenantContextException;
+import com.cda.exceptions.TenantRegistryException;
+import com.cda.model.TenantInputModel;
+import com.cda.model.TenantQueryInputModel;
+import com.cda.multitenant.TenantEntityManagerFactoryContext;
+import com.cda.persistence.PersistenceUnitInfoImpl;
+import com.cda.persistence.TransactionHandler;
+import com.cda.repository.RepositoryFactory;
+import com.cda.repository.tenant.TenantRepository;
+import com.cda.service.BaseService;
+import com.cda.utils.EncryptionService;
+import com.cda.utils.JdbcDriver;
+import com.google.common.collect.ImmutableMap;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Query;
+import javax.persistence.spi.PersistenceUnitInfo;
+import org.hibernate.dialect.MySQL5Dialect;
+import org.hibernate.jpa.HibernatePersistenceProvider;
+import org.springframework.util.CollectionUtils;
+
+public class TenantServiceImpl extends BaseService implements TenantService {
+  private final EncryptionService encryptionService;
+  private final TenantEntityManagerFactoryContext context;
+
+  private final ApplicationProperties properties;
+
+  public TenantServiceImpl(
+      RepositoryFactory repositoryFactory,
+      TransactionHandler transactionHandler,
+      EncryptionService encryptionService,
+      TenantEntityManagerFactoryContext tenantEntityManagerFactoryContext,
+      ApplicationProperties properties) {
+<span class="fc" id="L64">    super(repositoryFactory, transactionHandler);</span>
+<span class="fc" id="L65">    this.encryptionService = encryptionService;</span>
+<span class="fc" id="L66">    this.context = tenantEntityManagerFactoryContext;</span>
+<span class="fc" id="L67">    this.properties = properties;</span>
+<span class="fc" id="L68">  }</span>
+
+  private static final String VALID_DATABASE_NAME_REGEXP = &quot;[A-Za-z0-9_]*&quot;;
+
+  public EntityManagerFactory createEntityManagerFactory(Tenant tenant, File jarFile) {
+    try {
+<span class="fc" id="L74">      URL url = jarFile.toURI().toURL();</span>
+<span class="fc" id="L75">      URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {url});</span>
+
+<span class="fc" id="L77">      JdbcDriver dbmsType = properties.getJdbcDriver();</span>
+<span class="fc" id="L78">      PersistenceUnitInfo persistenceUnitInfo =</span>
+<span class="fc" id="L79">          new PersistenceUnitInfoImpl(tenant.getId(), tenant.getPackageName(), urlClassLoader);</span>
+<span class="fc" id="L80">      return new HibernatePersistenceProvider()</span>
+<span class="fc" id="L81">          .createContainerEntityManagerFactory(</span>
+              persistenceUnitInfo,
+<span class="fc" id="L83">              ImmutableMap.&lt;String, Object&gt;builder()</span>
+<span class="fc" id="L84">                  .put(JPA_JDBC_DRIVER, dbmsType.getDriverClassName())</span>
+<span class="fc" id="L85">                  .put(JPA_JDBC_URL, properties.getTenantUrlPrefix() + tenant.getDb())</span>
+<span class="fc" id="L86">                  .put(USER, tenant.getId())</span>
+<span class="fc" id="L87">                  .put(</span>
+                      PASS,
+<span class="fc" id="L89">                      encryptionService.decrypt(</span>
+<span class="fc" id="L90">                          tenant.getPassword(), properties.getSecret(), properties.getSalt()))</span>
+<span class="fc" id="L91">                  .put(DIALECT, MySQL5Dialect.class)</span>
+<span class="fc" id="L92">                  .put(HBM2DDL_AUTO, &quot;update&quot;)</span>
+<span class="fc" id="L93">                  .put(SHOW_SQL, true)</span>
+<span class="fc" id="L94">                  .put(QUERY_STARTUP_CHECKING, false)</span>
+<span class="fc" id="L95">                  .put(GENERATE_STATISTICS, false)</span>
+<span class="fc" id="L96">                  .put(USE_REFLECTION_OPTIMIZER, false)</span>
+<span class="fc" id="L97">                  .put(USE_SECOND_LEVEL_CACHE, false)</span>
+<span class="fc" id="L98">                  .put(USE_QUERY_CACHE, false)</span>
+<span class="fc" id="L99">                  .put(USE_STRUCTURED_CACHE, false)</span>
+<span class="fc" id="L100">                  .put(STATEMENT_BATCH_SIZE, 25)</span>
+<span class="fc" id="L101">                  .build());</span>
+<span class="nc" id="L102">    } catch (Exception e) {</span>
+<span class="nc" id="L103">      throw new TenantContextException(</span>
+<span class="nc" id="L104">          &quot;Error while creating connection for tenant \&quot;&quot; + tenant.getId() + &quot;\&quot;&quot;, e);</span>
+    }
+  }
+
+  @Override
+  public void register(TenantInputModel model) throws Exception {
+<span class="fc" id="L110">    transactionHandler.encapsulateTransaction(</span>
+        () -&gt; {
+<span class="fc" id="L112">          String tenantId = model.getName();</span>
+<span class="fc" id="L113">          String password = model.getPassword();</span>
+<span class="fc" id="L114">          String db = &quot;tenant_&quot; + tenantId;</span>
+<span class="fc" id="L115">          Tenant tenant = null;</span>
+
+<span class="fc" id="L117">          String encryptedPassword =</span>
+<span class="fc" id="L118">              encryptionService.encrypt(password, properties.getSecret(), properties.getSalt());</span>
+
+<span class="fc" id="L120">          TenantRepository tenantRepository = repositoryFactory.buildTenantRepository();</span>
+<span class="fc" id="L121">          Optional&lt;Tenant&gt; tenantOptional = tenantRepository.findById(tenantId);</span>
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">          if (tenantOptional.isPresent()) {</span>
+<span class="nc" id="L123">            tenant = tenantOptional.get();</span>
+
+<span class="nc bnc" id="L125" title="All 2 branches missed.">            if (encryptedPassword != tenant.getPassword())</span>
+<span class="nc" id="L126">              throw new TenantRegistryException(&quot;The credentials doesn't match&quot;);</span>
+<span class="nc" id="L127">            tenant.setPackageName(model.getPackageName());</span>
+          } else {
+            // Verify db string to prevent SQL injection
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">            if (!db.matches(VALID_DATABASE_NAME_REGEXP)) {</span>
+<span class="nc" id="L131">              throw new TenantRegistryException(&quot;Invalid db name: &quot; + db);</span>
+            }
+<span class="fc" id="L133">            String url = properties.getTenantUrlPrefix() + db;</span>
+
+<span class="fc" id="L135">            tenant = new Tenant(tenantId, db, encryptedPassword, url, model.getPackageName());</span>
+          }
+
+<span class="fc" id="L138">          File jarFile = model.convertToJarFile();</span>
+<span class="fc" id="L139">          createDatabase(db, password, tenantId);</span>
+
+<span class="fc" id="L141">          EntityManagerFactory entityManagerFactory = createEntityManagerFactory(tenant, jarFile);</span>
+
+<span class="fc" id="L143">          context.register(tenant.getId(), entityManagerFactory);</span>
+
+<span class="fc" id="L145">          tenant = tenantRepository.save(tenant);</span>
+<span class="fc" id="L146">        });</span>
+<span class="fc" id="L147">  }</span>
+
+  public List&lt;?&gt; executeQuery(String tenantId, TenantQueryInputModel model) {
+<span class="nc" id="L150">    EntityManager em = null;</span>
+    try {
+<span class="nc" id="L152">      em = context.createEntityManager(tenantId);</span>
+<span class="nc" id="L153">      Query query = em.createQuery(model.getQuery());</span>
+
+<span class="nc bnc" id="L155" title="All 2 branches missed.">      if (!CollectionUtils.isEmpty(model.getParameters())) {</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        for (Map.Entry&lt;String, Object&gt; entry : model.getParameters().entrySet()) {</span>
+<span class="nc" id="L157">          query.setParameter(entry.getKey(), entry.getValue());</span>
+<span class="nc" id="L158">        }</span>
+      }
+
+<span class="nc" id="L161">      return query.getResultList();</span>
+<span class="nc" id="L162">    } catch (Exception e) {</span>
+<span class="nc" id="L163">      throw new RuntimeException(e);</span>
+    } finally {
+<span class="nc bnc" id="L165" title="All 2 branches missed.">      if (em != null) em.close();</span>
+    }
+  }
+
+  private HikariDataSource createMasterDataSource() throws SQLException, ClassNotFoundException {
+<span class="fc" id="L170">    HikariConfig config = new HikariConfig();</span>
+<span class="fc" id="L171">    config.setJdbcUrl(properties.getMasterUrl());</span>
+<span class="fc" id="L172">    config.setUsername(properties.getMasterUser());</span>
+<span class="fc" id="L173">    config.setPassword(properties.getMasterPassword());</span>
+<span class="fc" id="L174">    config.setMaximumPoolSize(10);</span>
+<span class="fc" id="L175">    config.setMinimumIdle(5);</span>
+<span class="fc" id="L176">    config.setConnectionTimeout(30000);</span>
+<span class="fc" id="L177">    config.setDriverClassName(properties.getJdbcDriver().getDriverClassName());</span>
+<span class="fc" id="L178">    return new HikariDataSource(config);</span>
+  }
+
+  private void executeCommand(Connection connection, String command) throws SQLException {
+<span class="fc" id="L182">    try (Statement statement = connection.createStatement()) {</span>
+<span class="fc" id="L183">      statement.execute(command);</span>
+<span class="fc" id="L184">      getLog().info(&quot;Executing command '&quot; + command + &quot;'&quot;);</span>
+    }
+<span class="fc" id="L186">  }</span>
+
+  private void createDatabase(String db, String password, String tenantId) {
+<span class="fc" id="L189">    try (HikariDataSource ds = createMasterDataSource();</span>
+<span class="fc" id="L190">        Connection connection = ds.getConnection()) {</span>
+      // Create database
+<span class="fc" id="L192">      String createDatabaseSql = &quot;CREATE DATABASE IF NOT EXISTS &quot; + db;</span>
+<span class="fc" id="L193">      executeCommand(connection, createDatabaseSql);</span>
+
+<span class="fc" id="L195">      String dropUserSql = &quot;DROP USER IF EXISTS &quot; + tenantId;</span>
+<span class="fc" id="L196">      executeCommand(connection, dropUserSql);</span>
+
+<span class="fc" id="L198">      String createUserSql = &quot;CREATE USER &quot; + tenantId + &quot; IDENTIFIED BY '&quot; + password + &quot;'&quot;;</span>
+<span class="fc" id="L199">      executeCommand(connection, createUserSql);</span>
+
+<span class="fc" id="L201">      String grantPrivilegesSql = &quot;GRANT ALL PRIVILEGES ON &quot; + db + &quot;.* TO &quot; + tenantId;</span>
+<span class="fc" id="L202">      executeCommand(connection, grantPrivilegesSql);</span>
+
+<span class="fc" id="L204">      getLog().info(&quot;Database and user created successfully.&quot;);</span>
+<span class="nc" id="L205">    } catch (Exception e) {</span>
+<span class="nc" id="L206">      throw new TenantRegistryException(</span>
+          &quot;Error while creating credentials for tenant '&quot; + tenantId + &quot;'&quot;, e);
+<span class="fc" id="L208">    }</span>
+<span class="fc" id="L209">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

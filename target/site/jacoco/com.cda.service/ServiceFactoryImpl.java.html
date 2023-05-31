@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceFactoryImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Centralized Data Access</a> &gt; <a href="index.source.html" class="el_package">com.cda.service</a> &gt; <span class="el_source">ServiceFactoryImpl.java</span></div><h1>ServiceFactoryImpl.java</h1><pre class="source lang-java linenums">package com.cda.service;
+
+import com.cda.configuration.ApplicationProperties;
+import com.cda.multitenant.TenantEntityManagerFactoryContext;
+import com.cda.persistence.DatabaseContext;
+import com.cda.persistence.TransactionHandler;
+import com.cda.repository.RepositoryFactory;
+import com.cda.service.tenant.TenantService;
+import com.cda.service.tenant.TenantServiceImpl;
+import com.cda.utils.EncryptionService;
+import com.cda.utils.EncryptionServiceImpl;
+
+public class ServiceFactoryImpl implements ServiceFactory {
+  private final RepositoryFactory repositoryFactory;
+  private final DatabaseContext databaseContext;
+  private final ApplicationProperties applicationProperties;
+  private final TenantEntityManagerFactoryContext tenantEntityManagerFactoryContext;
+  
+  private TransactionHandler cachedTransactionHandler;
+
+  public ServiceFactoryImpl(
+      RepositoryFactory repositoryFactory,
+      DatabaseContext databaseContext,
+    TenantEntityManagerFactoryContext tenantEntityManagerFactoryContext,
+<span class="fc" id="L25">      ApplicationProperties properties) {</span>
+<span class="fc" id="L26">    this.repositoryFactory = repositoryFactory;</span>
+<span class="fc" id="L27">    this.databaseContext = databaseContext;</span>
+<span class="fc" id="L28">    this.tenantEntityManagerFactoryContext = tenantEntityManagerFactoryContext;</span>
+<span class="fc" id="L29">    this.applicationProperties = properties;</span>
+<span class="fc" id="L30">  }</span>
+
+  public TenantService buildTenantService() {
+<span class="fc" id="L33">    return new TenantServiceImpl(</span>
+        repositoryFactory,
+<span class="fc" id="L35">        getTransactionHandler(),</span>
+<span class="fc" id="L36">        buildEncryptionService(),</span>
+      tenantEntityManagerFactoryContext,
+        applicationProperties);
+  }
+
+  private EncryptionService buildEncryptionService() {
+<span class="fc" id="L42">    return new EncryptionServiceImpl();</span>
+  }
+
+  private TransactionHandler getTransactionHandler() {
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">    if (cachedTransactionHandler == null)</span>
+<span class="fc" id="L47">      cachedTransactionHandler = new TransactionHandler(databaseContext);</span>
+<span class="fc" id="L48">    return cachedTransactionHandler;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

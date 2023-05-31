@@ -30,11 +30,12 @@ import com.cda.service.BaseService;
 import com.cda.utils.EncryptionService;
 import com.cda.utils.JdbcDriver;
 import com.google.common.collect.ImmutableMap;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
@@ -70,10 +71,10 @@ public class TenantServiceImpl extends BaseService implements TenantService {
 
   public EntityManagerFactory createEntityManagerFactory(Tenant tenant, File jarFile) {
     try {
-      URL url = new URL(jarFile.getPath());
+      URL url = jarFile.toURI().toURL();
       URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {url});
 
-      JdbcDriver dbmsType = JdbcDriver.getByName(properties.getDbmsName());
+      JdbcDriver dbmsType = properties.getJdbcDriver();
       PersistenceUnitInfo persistenceUnitInfo =
           new PersistenceUnitInfoImpl(tenant.getId(), tenant.getPackageName(), urlClassLoader);
       return new HibernatePersistenceProvider()
@@ -135,11 +136,11 @@ public class TenantServiceImpl extends BaseService implements TenantService {
           }
 
           File jarFile = model.convertToJarFile();
+          createDatabase(db, password, tenantId);
+
           EntityManagerFactory entityManagerFactory = createEntityManagerFactory(tenant, jarFile);
 
           context.register(tenant.getId(), entityManagerFactory);
-
-          createDatabase(db, password, tenantId);
 
           tenant = tenantRepository.save(tenant);
         });
@@ -165,37 +166,42 @@ public class TenantServiceImpl extends BaseService implements TenantService {
     }
   }
 
-  private Connection createMasterConnection() throws SQLException {
-    return DriverManager.getConnection(
-        properties.getMasterUrl(), properties.getMasterUser(), properties.getMasterPassword());
+  private HikariDataSource createMasterDataSource() throws SQLException, ClassNotFoundException {
+    HikariConfig config = new HikariConfig();
+    config.setJdbcUrl(properties.getMasterUrl());
+    config.setUsername(properties.getMasterUser());
+    config.setPassword(properties.getMasterPassword());
+    config.setMaximumPoolSize(10);
+    config.setMinimumIdle(5);
+    config.setConnectionTimeout(30000);
+    config.setDriverClassName(properties.getJdbcDriver().getDriverClassName());
+    return new HikariDataSource(config);
+  }
+
+  private void executeCommand(Connection connection, String command) throws SQLException {
+    try (Statement statement = connection.createStatement()) {
+      statement.execute(command);
+      getLog().info("Executing command '" + command + "'");
+    }
   }
 
   private void createDatabase(String db, String password, String tenantId) {
-    try (Connection connection = createMasterConnection()) {
+    try (HikariDataSource ds = createMasterDataSource();
+        Connection connection = ds.getConnection()) {
       // Create database
       String createDatabaseSql = "CREATE DATABASE IF NOT EXISTS " + db;
-      try (Statement statement = connection.createStatement()) {
-        statement.execute(createDatabaseSql);
-      }
+      executeCommand(connection, createDatabaseSql);
 
       String dropUserSql = "DROP USER IF EXISTS " + tenantId;
-      try (Statement statement = connection.createStatement()) {
-        statement.execute(dropUserSql);
-      }
+      executeCommand(connection, dropUserSql);
 
-      // Create user
       String createUserSql = "CREATE USER " + tenantId + " IDENTIFIED BY '" + password + "'";
-      try (Statement statement = connection.createStatement()) {
-        statement.execute(createUserSql);
-      }
+      executeCommand(connection, createUserSql);
 
-      // Grant privileges to user
-      String grantPrivilegesSql = "GRANT ALL PRIVILEGES ON " + db + " TO " + tenantId;
-      try (Statement statement = connection.createStatement()) {
-        statement.execute(grantPrivilegesSql);
-      }
+      String grantPrivilegesSql = "GRANT ALL PRIVILEGES ON " + db + ".* TO " + tenantId;
+      executeCommand(connection, grantPrivilegesSql);
 
-      System.out.println("Database and user created successfully.");
+      getLog().info("Database and user created successfully.");
     } catch (Exception e) {
       throw new TenantRegistryException(
           "Error while creating credentials for tenant '" + tenantId + "'", e);
