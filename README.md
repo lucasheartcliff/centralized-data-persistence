@@ -5,6 +5,7 @@
 <!--toc:start-->
   - [About the project](#about-the-project)
   - [Versions](#versions)
+  - [Author](#author)
 <!--toc:end-->
 
 ## About the project
@@ -16,3 +17,9 @@ This project will be used to provide database access for multiple services in a 
 Java: 11;
 MariaDB: 10.3.3x;
 Maven: 3.9.x;
+
+## Author
+
+[Lucas Morais](https://github.com/lucasheartcliff)
+ - Email: [lucascdemorais@gmail.com](mailto:lucascdemorais@gmail.com)
+  - LinkedIn: [LinkedIn Profile](https://www.linkedin.com/in/lucasheartclif)
