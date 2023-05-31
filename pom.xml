@@ -12,7 +12,7 @@
   <groupId>com</groupId>
   <artifactId>cda</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
   <name>Centralized Data Persistence</name>
   <properties>
     <java.version>11</java.version>

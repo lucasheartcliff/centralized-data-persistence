@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TenantServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Centralized Data Access</a> &gt; <a href="index.source.html" class="el_package">com.cda.service.tenant</a> &gt; <span class="el_source">TenantServiceImpl.java</span></div><h1>TenantServiceImpl.java</h1><pre class="source lang-java linenums">package com.cda.service.tenant;
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TenantServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Centralized Data Persistence</a> &gt; <a href="index.source.html" class="el_package">com.cda.service.tenant</a> &gt; <span class="el_source">TenantServiceImpl.java</span></div><h1>TenantServiceImpl.java</h1><pre class="source lang-java linenums">package com.cda.service.tenant;
 
 import static org.hibernate.cfg.AvailableSettings.DIALECT;
 import static org.hibernate.cfg.AvailableSettings.GENERATE_STATISTICS;
@@ -120,19 +120,19 @@ public class TenantServiceImpl extends BaseService implements TenantService {
 <span class="fc" id="L120">          TenantRepository tenantRepository = repositoryFactory.buildTenantRepository();</span>
 <span class="fc" id="L121">          Optional&lt;Tenant&gt; tenantOptional = tenantRepository.findById(tenantId);</span>
 <span class="pc bpc" id="L122" title="1 of 2 branches missed.">          if (tenantOptional.isPresent()) {</span>
-<span class="nc" id="L123">            tenant = tenantOptional.get();</span>
-
-<span class="nc bnc" id="L125" title="All 2 branches missed.">            if (encryptedPassword != tenant.getPassword())</span>
+<span class="fc" id="L123">            tenant = tenantOptional.get();</span>
+<span class="fc" id="L124">            String decryptedPassword = encryptionService.decrypt(tenant.getPassword(), properties.getSecret(), properties.getSalt());</span>
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">            if (!decryptedPassword.equals(password))</span>
 <span class="nc" id="L126">              throw new TenantRegistryException(&quot;The credentials doesn't match&quot;);</span>
-<span class="nc" id="L127">            tenant.setPackageName(model.getPackageName());</span>
-          } else {
+<span class="fc" id="L127">            tenant.setPackageName(model.getPackageName());</span>
+<span class="fc" id="L128">          } else {</span>
             // Verify db string to prevent SQL injection
-<span class="pc bpc" id="L130" title="1 of 2 branches missed.">            if (!db.matches(VALID_DATABASE_NAME_REGEXP)) {</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">            if (!db.matches(VALID_DATABASE_NAME_REGEXP)) {</span>
 <span class="nc" id="L131">              throw new TenantRegistryException(&quot;Invalid db name: &quot; + db);</span>
             }
-<span class="fc" id="L133">            String url = properties.getTenantUrlPrefix() + db;</span>
+<span class="nc" id="L133">            String url = properties.getTenantUrlPrefix() + db;</span>
 
-<span class="fc" id="L135">            tenant = new Tenant(tenantId, db, encryptedPassword, url, model.getPackageName());</span>
+<span class="nc" id="L135">            tenant = new Tenant(tenantId, db, encryptedPassword, url, model.getPackageName());</span>
           }
 
 <span class="fc" id="L138">          File jarFile = model.convertToJarFile();</span>
@@ -166,13 +166,13 @@ public class TenantServiceImpl extends BaseService implements TenantService {
     }
   }
 
-  private HikariDataSource createMasterDataSource() throws SQLException, ClassNotFoundException {
+  private HikariDataSource createMasterDataSource() throws SQLException {
 <span class="fc" id="L170">    HikariConfig config = new HikariConfig();</span>
 <span class="fc" id="L171">    config.setJdbcUrl(properties.getMasterUrl());</span>
 <span class="fc" id="L172">    config.setUsername(properties.getMasterUser());</span>
 <span class="fc" id="L173">    config.setPassword(properties.getMasterPassword());</span>
-<span class="fc" id="L174">    config.setMaximumPoolSize(10);</span>
-<span class="fc" id="L175">    config.setMinimumIdle(5);</span>
+<span class="fc" id="L174">    config.setMaximumPoolSize(3);</span>
+<span class="fc" id="L175">    config.setMinimumIdle(1);</span>
 <span class="fc" id="L176">    config.setConnectionTimeout(30000);</span>
 <span class="fc" id="L177">    config.setDriverClassName(properties.getJdbcDriver().getDriverClassName());</span>
 <span class="fc" id="L178">    return new HikariDataSource(config);</span>
@@ -181,7 +181,7 @@ public class TenantServiceImpl extends BaseService implements TenantService {
   private void executeCommand(Connection connection, String command) throws SQLException {
 <span class="fc" id="L182">    try (Statement statement = connection.createStatement()) {</span>
 <span class="fc" id="L183">      statement.execute(command);</span>
-<span class="fc" id="L184">      getLog().info(&quot;Executing command '&quot; + command + &quot;'&quot;);</span>
+<span class="fc" id="L184">      getLog().debug(&quot;Executing command '&quot; + command + &quot;'&quot;);</span>
     }
 <span class="fc" id="L186">  }</span>
 
