@@ -22,4 +22,4 @@ Maven: 3.9.x;
 
 [Lucas Morais](https://github.com/lucasheartcliff)
  - Email: [lucascdemorais@gmail.com](mailto:lucascdemorais@gmail.com)
-  - LinkedIn: [LinkedIn Profile](https://www.linkedin.com/in/lucasheartclif)
+ - LinkedIn: [Lucas Morais](https://www.linkedin.com/in/lucasheartcliff)
