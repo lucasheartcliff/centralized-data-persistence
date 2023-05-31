@@ -13,7 +13,7 @@
   <artifactId>cda</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>war</packaging>
-  <name>Centralized Data Access</name>
+  <name>Centralized Data Persistence</name>
   <properties>
     <java.version>11</java.version>
     <maven.compiler.source>11</maven.compiler.source>
