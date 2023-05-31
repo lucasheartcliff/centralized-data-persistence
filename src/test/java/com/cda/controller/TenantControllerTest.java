@@ -2,8 +2,6 @@ package com.cda.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.cda.api.TenantRegistryModel;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -11,6 +9,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import com.cda.api.TenantRegistryModel;
 
 public class TenantControllerTest extends BaseControllerTest {
   private final TestRestTemplate restTemplate;

@@ -121,8 +121,8 @@ public class TenantServiceImpl extends BaseService implements TenantService {
           Optional<Tenant> tenantOptional = tenantRepository.findById(tenantId);
           if (tenantOptional.isPresent()) {
             tenant = tenantOptional.get();
-
-            if (encryptedPassword != tenant.getPassword())
+            String decryptedPassword = encryptionService.decrypt(tenant.getPassword(), properties.getSecret(), properties.getSalt());
+            if (!decryptedPassword.equals(password))
               throw new TenantRegistryException("The credentials doesn't match");
             tenant.setPackageName(model.getPackageName());
           } else {
@@ -166,13 +166,13 @@ public class TenantServiceImpl extends BaseService implements TenantService {
     }
   }
 
-  private HikariDataSource createMasterDataSource() throws SQLException, ClassNotFoundException {
+  private HikariDataSource createMasterDataSource() throws SQLException {
     HikariConfig config = new HikariConfig();
     config.setJdbcUrl(properties.getMasterUrl());
     config.setUsername(properties.getMasterUser());
     config.setPassword(properties.getMasterPassword());
-    config.setMaximumPoolSize(10);
-    config.setMinimumIdle(5);
+    config.setMaximumPoolSize(3);
+    config.setMinimumIdle(1);
     config.setConnectionTimeout(30000);
     config.setDriverClassName(properties.getJdbcDriver().getDriverClassName());
     return new HikariDataSource(config);
@@ -181,7 +181,7 @@ public class TenantServiceImpl extends BaseService implements TenantService {
   private void executeCommand(Connection connection, String command) throws SQLException {
     try (Statement statement = connection.createStatement()) {
       statement.execute(command);
-      getLog().info("Executing command '" + command + "'");
+      getLog().debug("Executing command '" + command + "'");
     }
   }
 
