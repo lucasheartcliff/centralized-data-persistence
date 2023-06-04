@@ -44,7 +44,7 @@ public abstract class BaseController {
   }
 
   protected ResponseEntity<?> buildOKResponse(Object rawBody) {
-    return new ResponseEntity<>(gson.toJsonTree(rawBody), HttpStatus.OK);
+    return new ResponseEntity<>(gson.toJson(rawBody), HttpStatus.OK);
   }
 
   protected ResponseEntity<?> buildOKResponse() {

@@ -38,9 +38,11 @@ import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
@@ -106,9 +108,10 @@ public class TenantServiceImpl extends BaseService implements TenantService {
   }
 
   @Override
-  public void register(TenantInputModel model) throws Exception {
-    transactionHandler.encapsulateTransaction(
+  public String register(TenantInputModel model) throws Exception {
+    return transactionHandler.encapsulateTransaction(
         () -> {
+          String tenantToken = UUID.randomUUID().toString();
           String tenantId = model.getName();
           String password = model.getPassword();
           String db = "tenant_" + tenantId;
@@ -121,7 +124,9 @@ public class TenantServiceImpl extends BaseService implements TenantService {
           Optional<Tenant> tenantOptional = tenantRepository.findById(tenantId);
           if (tenantOptional.isPresent()) {
             tenant = tenantOptional.get();
-            String decryptedPassword = encryptionService.decrypt(tenant.getPassword(), properties.getSecret(), properties.getSalt());
+            String decryptedPassword =
+                encryptionService.decrypt(
+                    tenant.getPassword(), properties.getSecret(), properties.getSalt());
             if (!decryptedPassword.equals(password))
               throw new TenantRegistryException("The credentials doesn't match");
             tenant.setPackageName(model.getPackageName());
@@ -140,25 +145,34 @@ public class TenantServiceImpl extends BaseService implements TenantService {
 
           EntityManagerFactory entityManagerFactory = createEntityManagerFactory(tenant, jarFile);
 
-          context.register(tenant.getId(), entityManagerFactory);
+          context.register(tenantToken, entityManagerFactory);
 
           tenant = tenantRepository.save(tenant);
+          return tenantToken;
         });
   }
 
-  public List<?> executeQuery(String tenantId, TenantQueryInputModel model) {
+  @Override
+  public List<List<?>> executeQuery(String tenantId, List<TenantQueryInputModel> models) {
     EntityManager em = null;
+    List<List<?>> resultList = new ArrayList<>();
     try {
       em = context.createEntityManager(tenantId);
-      Query query = em.createQuery(model.getQuery());
 
-      if (!CollectionUtils.isEmpty(model.getParameters())) {
-        for (Map.Entry<String, Object> entry : model.getParameters().entrySet()) {
-          query.setParameter(entry.getKey(), entry.getValue());
+      if (CollectionUtils.isEmpty(models)) {
+        for (TenantQueryInputModel model : models) {
+
+          Query query = em.createQuery(model.getQuery());
+
+          if (!CollectionUtils.isEmpty(model.getParameters())) {
+            for (Map.Entry<String, Object> entry : model.getParameters().entrySet()) {
+              query.setParameter(entry.getKey(), entry.getValue());
+            }
+          }
+          resultList.add(query.getResultList());
         }
       }
-
-      return query.getResultList();
+      return resultList;
     } catch (Exception e) {
       throw new RuntimeException(e);
     } finally {

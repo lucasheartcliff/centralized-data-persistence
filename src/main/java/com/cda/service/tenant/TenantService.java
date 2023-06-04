@@ -1,7 +1,11 @@
 package com.cda.service.tenant;
 
+import java.util.List;
+
 import com.cda.model.TenantInputModel;
+import com.cda.model.TenantQueryInputModel;
 
 public interface TenantService {
-  void register(TenantInputModel model) throws Exception;
+  List<List<?>> executeQuery(String tenantId, List<TenantQueryInputModel> models);
+  String register(TenantInputModel model) throws Exception;
 }

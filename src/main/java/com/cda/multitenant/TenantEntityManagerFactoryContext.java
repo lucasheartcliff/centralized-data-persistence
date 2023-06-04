@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Scope("singleton")
 public class TenantEntityManagerFactoryContext {
   private final Map<String, EntityManagerFactory> factoriesRepository;
-
+  
   public TenantEntityManagerFactoryContext() {
     factoriesRepository = new ConcurrentHashMap<>();
   }
@@ -37,7 +37,7 @@ public class TenantEntityManagerFactoryContext {
 
     if (!factoriesRepository.containsKey(tenantId))
       throw new TenantContextException(
-          "There is no factory registered for tenant: '" + tenantId + "'");
+          "There is no factory registered for this token");
     return factoriesRepository.get(tenantId).createEntityManager();
   }
 }

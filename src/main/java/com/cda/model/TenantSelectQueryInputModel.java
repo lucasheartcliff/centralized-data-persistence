@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class TenantQueryInputModel {
+public class TenantSelectQueryInputModel extends TenantQueryModel {
   private String query;
   private Map<String, Object> parameters;
   private String resultClassName;
