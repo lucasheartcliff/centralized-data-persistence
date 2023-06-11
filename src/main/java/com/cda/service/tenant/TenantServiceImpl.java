@@ -15,12 +15,13 @@ import static org.hibernate.cfg.AvailableSettings.USE_REFLECTION_OPTIMIZER;
 import static org.hibernate.cfg.AvailableSettings.USE_SECOND_LEVEL_CACHE;
 import static org.hibernate.cfg.AvailableSettings.USE_STRUCTURED_CACHE;
 
+import com.cda.api.commands.QueryCommand;
+import com.cda.api.commands.SelectCommand;
 import com.cda.configuration.ApplicationProperties;
 import com.cda.entities.Tenant;
 import com.cda.exceptions.TenantContextException;
 import com.cda.exceptions.TenantRegistryException;
 import com.cda.model.TenantInputModel;
-import com.cda.model.TenantQueryInputModel;
 import com.cda.multitenant.TenantEntityManagerFactoryContext;
 import com.cda.persistence.PersistenceUnitInfoImpl;
 import com.cda.persistence.TransactionHandler;
@@ -39,12 +40,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
 import javax.persistence.spi.PersistenceUnitInfo;
 import org.hibernate.dialect.MySQL5Dialect;
@@ -153,31 +156,99 @@ public class TenantServiceImpl extends BaseService implements TenantService {
   }
 
   @Override
-  public List<List<?>> executeQuery(String tenantId, List<TenantQueryInputModel> models) {
-    EntityManager em = null;
-    List<List<?>> resultList = new ArrayList<>();
+  public List<Object> executeQuery(String tenantId, List<QueryCommand> commands) {
+    EntityManager entityManager = null;
+    EntityTransaction transaction = null;
+    QueryCommand currentCommand = null;
+    int currentIdx = 0;
+
+    List<Object> resultList = new ArrayList<>();
     try {
-      em = context.createEntityManager(tenantId);
+      entityManager = context.createEntityManager(tenantId);
 
-      if (CollectionUtils.isEmpty(models)) {
-        for (TenantQueryInputModel model : models) {
-
-          Query query = em.createQuery(model.getQuery());
-
-          if (!CollectionUtils.isEmpty(model.getParameters())) {
-            for (Map.Entry<String, Object> entry : model.getParameters().entrySet()) {
-              query.setParameter(entry.getKey(), entry.getValue());
-            }
+      if (!CollectionUtils.isEmpty(commands)) {
+        transaction = entityManager.getTransaction();
+        transaction.begin();
+        for (QueryCommand command : commands) {
+          currentCommand = command;
+          Object r = null;
+          if (command == null) {
+            resultList.add(null);
+            continue;
           }
-          resultList.add(query.getResultList());
+
+          switch (command.getCommandType()) {
+            case INSERT:
+              r = executeInsertCommand(tenantId, command, entityManager);
+              break;
+            case UPDATE:
+              r = executeUpdateCommand(tenantId, command, entityManager);
+              break;
+            case DELETE:
+              r = executeDeleteCommand(tenantId, command, entityManager);
+              break;
+            case SELECT:
+              r = executeSelectCommand(tenantId, command, entityManager);
+              break;
+          }
+          resultList.add(r);
+          currentIdx++;
         }
       }
+      transaction.commit();
       return resultList;
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      if (transaction != null) transaction.rollback();
+      throw new TenantContextException(
+          "An error has occurred while executing command with index "
+              + currentIdx
+              + ":\'"
+              + currentCommand.toString()
+              + "\' ",
+          e);
     } finally {
-      if (em != null) em.close();
+      if (entityManager != null) entityManager.close();
     }
+  }
+
+  private Object executeDeleteCommand(
+      String tenantId, QueryCommand command, EntityManager entityManager) {
+    Object parsedEntity = getParsedEntityFromCommand(tenantId, command);
+    entityManager.remove(parsedEntity);
+    return parsedEntity;
+  }
+
+  private Object executeUpdateCommand(
+      String tenantId, QueryCommand command, EntityManager entityManager) {
+    Object parsedEntity = getParsedEntityFromCommand(tenantId, command);
+    return entityManager.merge(parsedEntity);
+  }
+
+  private Object executeInsertCommand(
+      String tenantId, QueryCommand command, EntityManager entityManager) {
+    Object parsedEntity = getParsedEntityFromCommand(tenantId, command);
+    entityManager.persist(parsedEntity);
+    return parsedEntity;
+  }
+
+  private List<?> executeSelectCommand(
+      String tenantId, QueryCommand command, EntityManager entityManager) {
+    SelectCommand.Query parsedContent = command.getParsedContent(SelectCommand.Query.class);
+    if (parsedContent.getQuery() == "") return Collections.emptyList();
+
+    Query query = entityManager.createQuery(parsedContent.getQuery());
+
+    if (!CollectionUtils.isEmpty(parsedContent.getParameters())) {
+      for (Map.Entry<String, Object> entry : parsedContent.getParameters().entrySet()) {
+        query.setParameter(entry.getKey(), entry.getValue());
+      }
+    }
+    return query.getResultList();
+  }
+
+  private Object getParsedEntityFromCommand(String tenantId, QueryCommand command) {
+    Class<?> entityClass = context.getClass(tenantId, command.getClassName());
+    return command.getParsedContent(entityClass);
   }
 
   private HikariDataSource createMasterDataSource() throws SQLException {

@@ -2,10 +2,10 @@ package com.cda.service.tenant;
 
 import java.util.List;
 
+import com.cda.api.commands.QueryCommand;
 import com.cda.model.TenantInputModel;
-import com.cda.model.TenantQueryInputModel;
 
 public interface TenantService {
-  List<List<?>> executeQuery(String tenantId, List<TenantQueryInputModel> models);
+  List<Object> executeQuery(String tenantId, List<QueryCommand> commands);
   String register(TenantInputModel model) throws Exception;
 }

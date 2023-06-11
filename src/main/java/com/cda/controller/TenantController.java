@@ -1,12 +1,9 @@
 package com.cda.controller;
 
-import com.cda.RequestHandler;
-import com.cda.model.TenantInputModel;
-import com.cda.model.TenantQueryInputModel;
-import com.cda.service.tenant.TenantService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +11,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.cda.RequestHandler;
+import com.cda.api.commands.QueryCommand;
+import com.cda.model.TenantInputModel;
+import com.cda.service.tenant.TenantService;
 
 @RestController
 @RequestMapping("/api/tenant")
@@ -34,14 +36,14 @@ public class TenantController extends BaseController {
         });
   }
 
-  @PostMapping("/query")
+  @PostMapping("/command")
   public ResponseEntity<?> executeQuery(
-      @RequestHeader("tenant-token") String tenantToken,
-      @RequestBody List<TenantQueryInputModel> models) {
+      @RequestHeader("X-tenant-token") String tenantToken,
+      @RequestBody List<QueryCommand> commands) {
     return encapsulateRequest(
         (serviceFactory) -> {
           TenantService tenantService = serviceFactory.buildTenantService();
-          List<List<?>> result = tenantService.executeQuery(tenantToken, models);
+          List<Object> result = tenantService.executeQuery(tenantToken, commands);
           return buildOKResponse(buildResponse("result", result));
         });
   }
