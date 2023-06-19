@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import com.google.gson.Gson;
 
-public abstract class QueryCommand implements Serializable {
+public class QueryCommand implements Serializable {
   private CommandType commandType;
   private String content;
   private String className;

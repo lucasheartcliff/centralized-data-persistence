@@ -40,7 +40,7 @@ public class TenantEntityManagerFactoryContext {
     EntityManagerFactory factory = getFactory(tenantId);
     Optional<EntityType<?>> findFirst =
         factory.getMetamodel().getEntities().stream()
-            .filter(x -> x.getClass().getName().equals(className))
+            .filter(x -> x.getJavaType().getName().equals(className))
             .findFirst();
     if (!findFirst.isPresent())
       throw new TenantContextException(
