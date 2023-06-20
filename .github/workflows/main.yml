@@ -13,13 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mariadb:
-        image: mariadb:latest
+        image: mariadb:10.3
         env:
           MARIADB_ROOT_PASSWORD: 
           MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
         ports:
           - 3306:3306
-        options: --health-cmd "mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries 3
 
     steps:
     - name: Checkout code
