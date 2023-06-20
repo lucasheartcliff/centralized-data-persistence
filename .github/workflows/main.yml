@@ -20,10 +20,19 @@ jobs:
         ports:
           - 3306:3306
         options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+        volumes:
+          - ./init-mariadb:/docker-entrypoint-initdb.d
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+
+    - name: Wait for MariaDB to be ready
+        run: |
+          sleep 10s
+          while ! mysqladmin ping -h 127.0.0.1 -P 3306 -u root --silent; do
+            sleep 2s
+          done
 
     - name: Setup Database
       run: ./scripts/configdb
