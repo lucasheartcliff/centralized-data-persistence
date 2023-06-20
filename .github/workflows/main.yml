@@ -15,11 +15,11 @@ jobs:
       mariadb:
         image: mariadb:latest
         env:
-          MARIADB_ROOT_PASSWORD:
+          MARIADB_ROOT_PASSWORD: 
           MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
         ports:
           - 3306:3306
-        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+        options: --health-cmd "mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries 3
 
     steps:
     - name: Checkout code
@@ -27,9 +27,8 @@ jobs:
 
     - name: Wait for MariaDB to be ready
       run: |
-        sleep 10s
         while ! mysqladmin ping -h 127.0.0.1 -P 3306 -u root --silent; do
-          sleep 2s
+          sleep 1
         done
 
     - name: Setup Database
