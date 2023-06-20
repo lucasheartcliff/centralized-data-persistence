@@ -15,13 +15,17 @@ jobs:
       mariadb:
         image: mariadb:latest
         env:
-          MYSQL_ROOT_PASSWORD: 
-          MYSQL_DATABASE: cda_master
-          MYSQL_USER: cda
-          MYSQL_PASSWORD: 
+          MYSQL_ROOT_PASSWORD:
+        ports:
+          - 3306:3306
+        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+
+    - name: Setup Database
+      run: ./scripts/configdb
 
     - name: Set up JDK
       uses: actions/setup-java@v3
@@ -30,7 +34,7 @@ jobs:
         java-version: '11'
     
     - name: Build with Maven
-      run: mvn clean install
+      run: ./mvnw clean install
     
     - name: Run tests with Maven
-      run: mvn test
+      run: ./mvnw test
