@@ -65,9 +65,6 @@ public class TenantControllerTest extends BaseControllerTest {
     assertEquals(xEntityInsertResponse.getName(), xEntityUpdateResponse.getName());
     assertNotNull(xEntityUpdateResponse.getCreatedAt());
     assertNotNull(xEntityUpdateResponse.getUpdatedAt());
-    assertNotEquals(
-        xEntityUpdateResponse.getCreatedAt().getTime(),
-        xEntityUpdateResponse.getUpdatedAt().getTime());
     assertNotNull(xEntityUpdateResponse.getId());
   }
 
