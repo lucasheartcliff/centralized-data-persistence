@@ -1,14 +1,17 @@
 package com.cda.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.cda.api.TenantRegistryModel;
-import com.cda.api.commands.*;
+import com.cda.api.commands.InsertCommand;
+import com.cda.api.commands.QueryCommand;
+import com.cda.api.commands.UpdateCommand;
 import com.cda.testmodels.XEntity;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,21 +52,32 @@ public class TenantControllerTest extends BaseControllerTest {
   }
 
   @Test
-  public void shouldExecuteInsertCommand() throws Exception {
-    String token = registerTenantAndGetToken();
-    HttpHeaders headers = new HttpHeaders();
-    headers.add("X-tenant-token", token);
+  public void shouldExecuteUpdateCommand() throws Exception {
+    XEntity xEntityInsertResponse = executeInsertCommand();
+    xEntityInsertResponse.setName("Edited x entity");
 
+    UpdateCommand updateCommand = new UpdateCommand(xEntityInsertResponse);
+    ResponseEntity<String> response = executeRequest(Collections.singletonList(updateCommand));
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    XEntity xEntityUpdateResponse = deserializeResultResponse(response.getBody(), XEntity.class);
+
+    assertEquals(xEntityInsertResponse.getName(), xEntityUpdateResponse.getName());
+    assertNotNull(xEntityUpdateResponse.getCreatedAt());
+    assertNotNull(xEntityUpdateResponse.getUpdatedAt());
+    assertNotEquals(
+        xEntityUpdateResponse.getCreatedAt().getTime(),
+        xEntityUpdateResponse.getUpdatedAt().getTime());
+    assertNotNull(xEntityUpdateResponse.getId());
+  }
+
+  @Test
+  public void shouldExecuteInsertCommand() throws Exception {
     XEntity xe = new XEntity();
     xe.setName(UUID.randomUUID().toString());
 
     InsertCommand insertCommand = new InsertCommand(xe);
-    ResponseEntity<String> response =
-        restTemplate.exchange(
-            "/api/tenant/command",
-            HttpMethod.POST,
-            new HttpEntity<>(Arrays.asList(insertCommand), headers),
-            String.class);
+    ResponseEntity<String> response = executeRequest(Collections.singletonList(insertCommand));
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     XEntity xEntityResponse = deserializeResultResponse(response.getBody(), XEntity.class);
@@ -72,6 +86,27 @@ public class TenantControllerTest extends BaseControllerTest {
     assertNotNull(xEntityResponse.getCreatedAt());
     assertNotNull(xEntityResponse.getUpdatedAt());
     assertNotNull(xEntityResponse.getId());
+  }
+
+  private XEntity executeInsertCommand() {
+    XEntity xEntity = new XEntity();
+    xEntity.setName(UUID.randomUUID().toString());
+
+    InsertCommand insertCommand = new InsertCommand(xEntity);
+    ResponseEntity<String> responseInsert =
+        executeRequest(Collections.singletonList(insertCommand));
+
+    assertEquals(HttpStatus.OK, responseInsert.getStatusCode());
+    return deserializeResultResponse(responseInsert.getBody(), XEntity.class);
+  }
+
+  private ResponseEntity<String> executeRequest(List<QueryCommand> commands) {
+    String token = registerTenantAndGetToken();
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("X-tenant-token", token);
+
+    return restTemplate.exchange(
+        "/api/tenant/command", HttpMethod.POST, new HttpEntity<>(commands, headers), String.class);
   }
 
   private String registerTenantAndGetToken() {
