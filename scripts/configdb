@@ -2,7 +2,7 @@
 USERNAME=cda
 DB_NAME=cda_master
 
-mysql -u root -v $@  <<EOF
+mysql -h 127.0.0.1 -u root -v $@  <<EOF
 -- delete database
 DROP DATABASE IF EXISTS $DB_NAME;
 

@@ -13,15 +13,25 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mariadb:
-        image: mariadb:latest
+        image: mariadb:10.3
         env:
-          MYSQL_ROOT_PASSWORD: 
-          MYSQL_DATABASE: cda_master
-          MYSQL_USER: cda
-          MYSQL_PASSWORD: 
+          MARIADB_ROOT_PASSWORD: 
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
+        ports:
+          - 3306:3306
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+
+    - name: Wait for MariaDB to be ready
+      run: |
+        while ! mysqladmin ping -h 127.0.0.1 -P 3306 -u root --silent; do
+          sleep 1
+        done
+
+    - name: Setup Database
+      run: ./scripts/configdb
 
     - name: Set up JDK
       uses: actions/setup-java@v3
