@@ -214,7 +214,8 @@ public class TenantServiceImpl extends BaseService implements TenantService {
   private Object executeDeleteCommand(
       String tenantId, QueryCommand command, EntityManager entityManager) {
     Object parsedEntity = getParsedEntityFromCommand(tenantId, command);
-    entityManager.remove(parsedEntity);
+    Object attachedEntity = entityManager.merge(parsedEntity);
+    entityManager.remove(attachedEntity);
     return parsedEntity;
   }
 

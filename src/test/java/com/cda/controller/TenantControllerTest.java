@@ -1,17 +1,19 @@
 package com.cda.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.cda.api.TenantRegistryModel;
+import com.cda.api.commands.DeleteCommand;
 import com.cda.api.commands.InsertCommand;
 import com.cda.api.commands.QueryCommand;
+import com.cda.api.commands.SelectCommand;
 import com.cda.api.commands.UpdateCommand;
 import com.cda.testmodels.XEntity;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +54,16 @@ public class TenantControllerTest extends BaseControllerTest {
   }
 
   @Test
+  public void shouldExecuteDeleteCommand() throws Exception {
+    XEntity xEntityInsertResponse = executeInsertCommand();
+
+    DeleteCommand updateCommand = new DeleteCommand(xEntityInsertResponse);
+    ResponseEntity<String> response = executeRequest(Collections.singletonList(updateCommand));
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  @Test
   public void shouldExecuteUpdateCommand() throws Exception {
     XEntity xEntityInsertResponse = executeInsertCommand();
     xEntityInsertResponse.setName("Edited x entity");
@@ -66,6 +78,27 @@ public class TenantControllerTest extends BaseControllerTest {
     assertNotNull(xEntityUpdateResponse.getCreatedAt());
     assertNotNull(xEntityUpdateResponse.getUpdatedAt());
     assertNotNull(xEntityUpdateResponse.getId());
+  }
+
+  // @Test
+  public void shouldExecuteSelectCommand() throws Exception {
+    XEntity xEntityInsertResponse = executeInsertCommand();
+
+    String query = "SELECT x FROM XEntity x WHERE x.id = :id";
+
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("id", xEntityInsertResponse.getId().toString());
+
+    SelectCommand selectCommand = new SelectCommand(new SelectCommand.Query(query, parameters));
+    ResponseEntity<String> response = executeRequest(Collections.singletonList(selectCommand));
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    XEntity xEntitySelectResponse = deserializeResultResponse(response.getBody(), XEntity.class);
+
+    assertEquals(xEntityInsertResponse.getName(), xEntitySelectResponse.getName());
+    assertEquals(xEntityInsertResponse.getId(), xEntitySelectResponse.getId());
+    assertEquals(xEntityInsertResponse.getCreatedAt(), xEntitySelectResponse.getCreatedAt());
+    assertEquals(xEntityInsertResponse.getUpdatedAt(), xEntitySelectResponse.getUpdatedAt());
   }
 
   @Test
