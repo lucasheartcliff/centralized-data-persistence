@@ -80,21 +80,26 @@ public class TenantControllerTest extends BaseControllerTest {
     assertNotNull(xEntityUpdateResponse.getId());
   }
 
-  // @Test
+  @Test
   public void shouldExecuteSelectCommand() throws Exception {
     XEntity xEntityInsertResponse = executeInsertCommand();
 
     String query = "SELECT x FROM XEntity x WHERE x.id = :id";
 
     Map<String, Object> parameters = new HashMap<>();
-    parameters.put("id", xEntityInsertResponse.getId().toString());
+    parameters.put("id", xEntityInsertResponse.getId());
 
     SelectCommand selectCommand = new SelectCommand(new SelectCommand.Query(query, parameters));
     ResponseEntity<String> response = executeRequest(Collections.singletonList(selectCommand));
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    XEntity xEntitySelectResponse = deserializeResultResponse(response.getBody(), XEntity.class);
+    List<XEntity> selectResponseList =
+        deserializeSelectResultResponse(response.getBody(), XEntity.class);
 
+    assertNotNull(selectResponseList);
+    assertEquals(1, selectResponseList.size());
+
+    XEntity xEntitySelectResponse = selectResponseList.get(0);
     assertEquals(xEntityInsertResponse.getName(), xEntitySelectResponse.getName());
     assertEquals(xEntityInsertResponse.getId(), xEntitySelectResponse.getId());
     assertEquals(xEntityInsertResponse.getCreatedAt(), xEntitySelectResponse.getCreatedAt());
@@ -153,6 +158,15 @@ public class TenantControllerTest extends BaseControllerTest {
     Map<String, Object> responseObject = deserializeResponse(response.getBody());
     String token = (String) responseObject.get("token");
     return token;
+  }
+
+  private List<XEntity> deserializeSelectResultResponse(String response, Class<XEntity> clazz) {
+    if (response == null) return null;
+
+    Type listType = new TypeToken<Map<String, List<List<XEntity>>>>() {}.getType();
+    return ((Map<String, List<List<XEntity>>>) gson.fromJson(response, listType))
+        .get("result")
+        .get(0);
   }
 
   private XEntity deserializeResultResponse(String response, Class<XEntity> clazz) {

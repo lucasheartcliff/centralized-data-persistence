@@ -17,6 +17,7 @@ import static org.hibernate.cfg.AvailableSettings.USE_STRUCTURED_CACHE;
 
 import com.cda.api.commands.QueryCommand;
 import com.cda.api.commands.SelectCommand;
+import com.cda.api.commands.SelectCommand.Query.Argument;
 import com.cda.configuration.ApplicationProperties;
 import com.cda.entities.Tenant;
 import com.cda.exceptions.TenantContextException;
@@ -39,6 +40,7 @@ import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -233,15 +235,15 @@ public class TenantServiceImpl extends BaseService implements TenantService {
   }
 
   private List<?> executeSelectCommand(
-      String tenantId, QueryCommand command, EntityManager entityManager) {
+      String tenantId, QueryCommand command, EntityManager entityManager) throws ParseException {
     SelectCommand.Query parsedContent = command.getParsedContent(SelectCommand.Query.class);
     if (parsedContent.getQuery() == "") return Collections.emptyList();
 
     Query query = entityManager.createQuery(parsedContent.getQuery());
 
     if (!CollectionUtils.isEmpty(parsedContent.getParameters())) {
-      for (Map.Entry<String, Object> entry : parsedContent.getParameters().entrySet()) {
-        query.setParameter(entry.getKey(), entry.getValue());
+      for (Map.Entry<String, Argument> entry : parsedContent.getParameters().entrySet()) {
+        query.setParameter(entry.getKey(), entry.getValue().getValue());
       }
     }
     return query.getResultList();
