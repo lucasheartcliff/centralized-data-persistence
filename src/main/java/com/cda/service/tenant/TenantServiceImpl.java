@@ -76,7 +76,7 @@ public class TenantServiceImpl extends BaseService implements TenantService {
 
   private static final String VALID_DATABASE_NAME_REGEXP = "[A-Za-z0-9_]*";
 
-  public EntityManagerFactory createEntityManagerFactory(Tenant tenant, File jarFile) {
+  private EntityManagerFactory createEntityManagerFactory(Tenant tenant, File jarFile) {
     try {
       URL url = jarFile.toURI().toURL();
       URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {url});
