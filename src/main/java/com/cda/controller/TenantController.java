@@ -26,7 +26,7 @@ public class TenantController extends BaseController {
   }
 
   @PostMapping
-  public ResponseEntity<?> createTenant(@RequestBody TenantInputModel model) {
+  public ResponseEntity<?> register(@RequestBody TenantInputModel model) {
     return encapsulateRequest(
         (serviceFactory) -> {
           TenantService tenantService = serviceFactory.buildTenantService();
@@ -37,13 +37,13 @@ public class TenantController extends BaseController {
   }
 
   @PostMapping("/command")
-  public ResponseEntity<?> executeQuery(
+  public ResponseEntity<?> executeCommands(
       @RequestHeader("X-tenant-token") String tenantToken,
       @RequestBody List<QueryCommand> commands) {
     return encapsulateRequest(
         (serviceFactory) -> {
           TenantService tenantService = serviceFactory.buildTenantService();
-          List<Object> result = tenantService.executeQuery(tenantToken, commands);
+          List<Object> result = tenantService.executeCommands(tenantToken, commands);
           return buildOKResponse(buildResponse("result", result));
         });
   }

@@ -129,12 +129,12 @@ public class TenantServiceImpl extends BaseService implements TenantService {
           Optional<Tenant> tenantOptional = tenantRepository.findById(tenantId);
           if (tenantOptional.isPresent()) {
             tenant = tenantOptional.get();
-            String decryptedPassword =
-                encryptionService.decrypt(
-                    tenant.getPassword(), properties.getSecret(), properties.getSalt());
-            if (!decryptedPassword.equals(password))
+
+            if (!tenant.getPassword().equals(encryptedPassword))
               throw new TenantRegistryException("The credentials doesn't match");
+
             tenant.setPackageName(model.getPackageName());
+            context.unregister(tenantId);
           } else {
             // Verify db string to prevent SQL injection
             if (!db.matches(VALID_DATABASE_NAME_REGEXP)) {
@@ -150,7 +150,7 @@ public class TenantServiceImpl extends BaseService implements TenantService {
 
           EntityManagerFactory entityManagerFactory = createEntityManagerFactory(tenant, jarFile);
 
-          context.register(tenantToken, entityManagerFactory);
+          context.register(tenantId, tenantToken, entityManagerFactory);
 
           tenant = tenantRepository.save(tenant);
           return tenantToken;
@@ -158,44 +158,45 @@ public class TenantServiceImpl extends BaseService implements TenantService {
   }
 
   @Override
-  public List<Object> executeQuery(String tenantId, List<QueryCommand> commands) {
+  public List<Object> executeCommands(String tenantToken, List<QueryCommand> commands) {
     EntityManager entityManager = null;
     EntityTransaction transaction = null;
     QueryCommand currentCommand = null;
     int currentIdx = 0;
 
-    List<Object> resultList = new ArrayList<>();
     try {
-      entityManager = context.createEntityManager(tenantId);
+      entityManager = context.createEntityManager(tenantToken);
 
-      if (!CollectionUtils.isEmpty(commands)) {
-        transaction = entityManager.getTransaction();
-        transaction.begin();
-        for (QueryCommand command : commands) {
-          currentCommand = command;
-          Object r = null;
-          if (command == null) {
-            resultList.add(null);
-            continue;
-          }
+      if (CollectionUtils.isEmpty(commands)) return new ArrayList<>(0);
+      List<Object> resultList = new ArrayList<>(commands.size());
 
-          switch (command.getCommandType()) {
-            case INSERT:
-              r = executeInsertCommand(tenantId, command, entityManager);
-              break;
-            case UPDATE:
-              r = executeUpdateCommand(tenantId, command, entityManager);
-              break;
-            case DELETE:
-              r = executeDeleteCommand(tenantId, command, entityManager);
-              break;
-            case SELECT:
-              r = executeSelectCommand(tenantId, command, entityManager);
-              break;
-          }
-          resultList.add(r);
-          currentIdx++;
+      transaction = entityManager.getTransaction();
+      transaction.begin();
+
+      for (QueryCommand command : commands) {
+        currentCommand = command;
+        Object r = null;
+        if (command == null) {
+          resultList.add(null);
+          continue;
         }
+
+        switch (command.getCommandType()) {
+          case INSERT:
+            r = executeInsertCommand(tenantToken, command, entityManager);
+            break;
+          case UPDATE:
+            r = executeUpdateCommand(tenantToken, command, entityManager);
+            break;
+          case DELETE:
+            r = executeDeleteCommand(tenantToken, command, entityManager);
+            break;
+          case SELECT:
+            r = executeSelectCommand(tenantToken, command, entityManager);
+            break;
+        }
+        resultList.add(r);
+        currentIdx++;
       }
       transaction.commit();
       return resultList;
@@ -214,28 +215,28 @@ public class TenantServiceImpl extends BaseService implements TenantService {
   }
 
   private Object executeDeleteCommand(
-      String tenantId, QueryCommand command, EntityManager entityManager) {
-    Object parsedEntity = getParsedEntityFromCommand(tenantId, command);
+      String tenantToken, QueryCommand command, EntityManager entityManager) {
+    Object parsedEntity = getParsedEntityFromCommand(tenantToken, command);
     Object attachedEntity = entityManager.merge(parsedEntity);
     entityManager.remove(attachedEntity);
     return parsedEntity;
   }
 
   private Object executeUpdateCommand(
-      String tenantId, QueryCommand command, EntityManager entityManager) {
-    Object parsedEntity = getParsedEntityFromCommand(tenantId, command);
+      String tenantToken, QueryCommand command, EntityManager entityManager) {
+    Object parsedEntity = getParsedEntityFromCommand(tenantToken, command);
     return entityManager.merge(parsedEntity);
   }
 
   private Object executeInsertCommand(
-      String tenantId, QueryCommand command, EntityManager entityManager) {
-    Object parsedEntity = getParsedEntityFromCommand(tenantId, command);
+      String tenantToken, QueryCommand command, EntityManager entityManager) {
+    Object parsedEntity = getParsedEntityFromCommand(tenantToken, command);
     entityManager.persist(parsedEntity);
     return parsedEntity;
   }
 
   private List<?> executeSelectCommand(
-      String tenantId, QueryCommand command, EntityManager entityManager) throws ParseException {
+      String tenantToken, QueryCommand command, EntityManager entityManager) throws ParseException {
     SelectCommand.Query parsedContent = command.getParsedContent(SelectCommand.Query.class);
     if (parsedContent.getQuery() == "") return Collections.emptyList();
 
@@ -249,8 +250,8 @@ public class TenantServiceImpl extends BaseService implements TenantService {
     return query.getResultList();
   }
 
-  private Object getParsedEntityFromCommand(String tenantId, QueryCommand command) {
-    Class<?> entityClass = context.getClass(tenantId, command.getClassName());
+  private Object getParsedEntityFromCommand(String tenantToken, QueryCommand command) {
+    Class<?> entityClass = context.getClass(tenantToken, command.getClassName());
     return command.getParsedContent(entityClass);
   }
 

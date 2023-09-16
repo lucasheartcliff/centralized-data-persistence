@@ -14,30 +14,36 @@ import org.springframework.stereotype.Service;
 @Scope("singleton")
 public class TenantEntityManagerFactoryContext {
   private final Map<String, EntityManagerFactory> factoriesRepository;
+  private final Map<String, String> tokenByTenantId;
 
   public TenantEntityManagerFactoryContext() {
     factoriesRepository = new ConcurrentHashMap<>();
+    tokenByTenantId = new ConcurrentHashMap<>();
   }
 
-  public void register(String tenantId, EntityManagerFactory factory) {
-    if (tenantId == null || factory == null || !factory.isOpen())
+  public void register(String tenantId, String token, EntityManagerFactory factory) {
+    if (tenantId == null || factory == null || token == null || !factory.isOpen())
       throw new TenantContextException("There are invalid values on tenant factory registry");
-    factoriesRepository.put(tenantId, factory);
+    factoriesRepository.put(token, factory);
+    tokenByTenantId.put(tenantId, token);
   }
 
   public void unregister(String tenantId) {
-    if (!factoriesRepository.containsKey(tenantId)) return;
+    if (!tokenByTenantId.containsKey(tenantId)) return;
 
-    EntityManagerFactory factory = factoriesRepository.remove(tenantId);
+    String token = tokenByTenantId.remove(tenantId);
+    if (!factoriesRepository.containsKey(token)) return;
+
+    EntityManagerFactory factory = factoriesRepository.remove(token);
     if (factory != null && factory.isOpen()) factory.close();
   }
 
-  public EntityManager createEntityManager(String tenantId) {
-    return getFactory(tenantId).createEntityManager();
+  public EntityManager createEntityManager(String token) {
+    return getFactory(token).createEntityManager();
   }
 
-  public Class<?> getClass(String tenantId, String className) {
-    EntityManagerFactory factory = getFactory(tenantId);
+  public Class<?> getClass(String token, String className) {
+    EntityManagerFactory factory = getFactory(token);
     Optional<EntityType<?>> findFirst =
         factory.getMetamodel().getEntities().stream()
             .filter(x -> x.getJavaType().getName().equals(className))
@@ -48,12 +54,12 @@ public class TenantEntityManagerFactoryContext {
     return findFirst.get().getJavaType();
   }
 
-  private EntityManagerFactory getFactory(String tenantId) {
-    if (tenantId == null)
+  private EntityManagerFactory getFactory(String token) {
+    if (token == null)
       throw new TenantContextException("There are invalid values on tenant factory registry");
 
-    if (!factoriesRepository.containsKey(tenantId))
+    if (!factoriesRepository.containsKey(token))
       throw new TenantContextException("There is no factory registered for this token");
-    return factoriesRepository.get(tenantId);
+    return factoriesRepository.get(token);
   }
 }
