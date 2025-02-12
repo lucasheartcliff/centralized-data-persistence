@@ -4,13 +4,16 @@
 
 <!--toc:start-->
   - [About the project](#about-the-project)
+  - [Documentation](#documentation)
   - [Versions](#versions)
   - [Author](#author)
 <!--toc:end-->
 
 ## About the project
+The project aims to explore inherent challenges in microservices architecture, notably code redundancies and lack of standards, particularly regarding data persistence. Thus emerged the concept of the Data Persistence Centralizer, a microservice that serves the practical function of facilitating access to relational databases. Adapting concepts from an existing model, which is the multi-tenant architecture, this solution provides a fast and uncomplicated way to persist information while abstracting the complexities inherent in this functionality.
 
-This project will be used to provide database access for multiple services in a micro-services architecture being as a shared component.
+## Documentation
+Full documentation (pt-br only): [link](https://drive.google.com/drive/folders/1LJ0IvUDq0UH65Pwb-LS6CEDC0hIRzbUj?hl=pt-BR)
 
 ## Versions
 
